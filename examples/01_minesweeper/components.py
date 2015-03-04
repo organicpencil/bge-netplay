@@ -17,7 +17,7 @@ def SPAWN_PLAYER(mgr, playername):
 
 def SPAWN_BLOCK(mgr, x, y):
     comp = mgr.spawnComponent('Block')
-    comp.setup([x, y, 0, 0, 0, 0])
+    comp.setup([x, y, 0, 0, 0, 0, 0, 0])
     comp.send_state()
     return comp
 ##
@@ -36,7 +36,8 @@ class Player(Component):
         return dataprocessor.getBytes(self.net_id, p_id, data)
 
     def send_state(self):
-        # Sent to each client once, including new clients
+        # Sent to each client once, not the new clients though...
+        # Much duplication with the above function
         self.packer.pack('setup', [self.playername, self.current_block_id])
 
     def setup(self, data):
@@ -82,7 +83,6 @@ class Player(Component):
         getInput = self.getInput
 
         if getInput('primary_pressed'):
-            print ('primary pressed')
             self.setInput('primary_pressed', 0, False)
             self.holding = True
             block.addHold()
@@ -100,18 +100,25 @@ class Player(Component):
 class Block(Component):
     def c_register_setup(self):
         self.packer.registerPack('setup', self.setup,
-            [Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR])
+            [Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR])
 
     def c_getStateData(self):
         p_id = self.packer.pack_index['setup']
         dataprocessor = self.packer.pack_list[p_id]
-        data = [self.x, self.y, self.over, self.held, self.opened, self.flagged]
+
+        if self.opened:
+            count = self.count
+            isMine = self.isMine
+        else:
+            count = 0
+            isMine = 0
+        data = [self.x, self.y, self.over, self.held, self.opened, self.flagged, count, isMine]
 
         return dataprocessor.getBytes(self.net_id, p_id, data)
 
     def send_state(self):
         # Sent on initial creation (c_getStateData is used for new clients)
-        self.packer.pack('setup', [self.x, self.y, self.over, self.held, self.opened, self.flagged])
+        self.packer.pack('setup', [self.x, self.y, self.over, self.held, self.opened, self.flagged, self.count, self.isMine])
 
         """ Replicated variables would be cool
         # Changes to these variables automatically replicate to other clients
@@ -131,16 +138,17 @@ class Block(Component):
         self.held = data[3]  # Number of players holding mouse on the block
         self.opened = data[4]
         self.flagged = data[5]
+        self.count = data[6]  # Will always be 0 on clients unless opened
+        self.isMine = data[7]  # Will always be 0 on clients unless opened
 
-        self.registerInput('addHover')
-        self.registerInput('removeHover')
-        self.registerInput('addHold')
-        self.registerInput('removeHold')
-        self.registerInput('open')
-        self.registerInput('flag')
+        #self.registerInput('addHover')
+        #self.registerInput('removeHover')
+        #self.registerInput('addHold')
+        #self.registerInput('removeHold')
+        #self.registerInput('open')
+        #self.registerInput('flag')
 
-        self.isMine = False
-        self.count = 0
+        self.packer.registerPack('open', self.process_open_signal, [Pack.UCHAR, Pack.UCHAR])
 
         # Create the GameObject
         scene = bge.logic.getCurrentScene()
@@ -203,9 +211,61 @@ class Block(Component):
 
         self.opened = 1
 
+        if self.mgr.hostmode == 'server':
+            new = self.ob.scene.addObject('Uncovered', self.ob)
+            self.ob.endObject()
+            self.ob = new
+
+            text = new.children[0]
+            if self.isMine:
+                text['Text'] = "X"
+                text.color = self.mgr.game.colors[0]
+            elif self.count == 0:
+                text['Text'] = ""
+                text.color = self.mgr.game.colors[0]
+            else:
+                text['Text'] = str(self.count)
+                text.color = self.mgr.game.colors[self.count]
+
+            self.packer.pack('open', [self.count, self.isMine])
+
+            # And recursively open adjacent blocks if count = 0
+            if self.count == 0:
+                for dx in range(-1, 2):
+                    for dy in range(-1, 2):
+                        if dx == 0 and dy == 0:
+                            continue
+
+                        x = self.x + dx
+                        y = self.y + dy
+
+                        if (0 <= x < 10) and (0 <= y < 10):
+                            other = self.mgr.game.grid[x][y]
+                            other.held = 1
+                            other.open()
+
+                            # Others need to be signalled as well
+                            other.packer.pack('open', [other.count, other.isMine])
+
+    def process_open_signal(self, data):
+        self.count = data[0]
+        self.isMine = data[1]
+        self.opened = 1
+
         new = self.ob.scene.addObject('Uncovered', self.ob)
         self.ob.endObject()
         self.ob = new
+
+        text = new.children[0]
+        if self.isMine:
+            text['Text'] = "X"
+            text.color = self.mgr.game.colors[0]
+        elif self.count == 0:
+            text['Text'] = ""
+            text.color = self.mgr.game.colors[0]
+        else:
+            text['Text'] = str(self.count)
+            text.color = self.mgr.game.colors[self.count]
 
     def flag(self):
         if self.opened:
@@ -226,9 +286,12 @@ class Block(Component):
 
     def refresh(self):
         if self.opened:
+            self.process_open_signal([self.count, self.isMine])
+            """
             new = self.ob.scene.addObject('Uncovered', self.ob)
             self.ob.endObject()
             self.ob = new
+            """
             return
 
         if self.flagged:
