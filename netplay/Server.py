@@ -7,16 +7,15 @@ import threading
 import json
 import time
 
-MODE_SERVER = 0
-MODE_OFFLINE = 1
-MODE_CLIENT = 2
+from . import constants
+
 
 class ServerHeartbeatThread(threading.Thread):
     def __init__(self, game, port, info):
         super().__init__()
         self.port = port
         self.info = info
-        
+
         self.HOST = game.config['master']['hostname']
         self.PORT = int(game.config['master']['port'])
 
@@ -25,7 +24,7 @@ class ServerHeartbeatThread(threading.Thread):
         #PORT = 4000
         HOST = self.HOST
         PORT = self.PORT
-        
+
         if HOST == '':
             # No master configured
             return
@@ -50,7 +49,7 @@ class ServerHeartbeatThread(threading.Thread):
 
 class Server:
 
-    def __init__(self, game, mode=MODE_OFFLINE,
+    def __init__(self, game, mode=constants.MODE_OFFLINE,
             servername='', mapname='', playername='',
             maxclients=10, interface='', port=54303):
 
@@ -77,7 +76,7 @@ class Server:
         # It should temporarily be moved to a separate thread during
         # blocking operations
 
-        if mode == MODE_OFFLINE:
+        if mode == constants.MODE_OFFLINE:
             self.network = None
             print ("Playing offline")
         elif enet is None:
