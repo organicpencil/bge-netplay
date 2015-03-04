@@ -302,7 +302,7 @@ class Component:
         self.packer.registerPack('input_', self.process_input_,
             [Pack.INT])
 
-        self.c_register_pack()
+        self.c_register_setup()
 
     def registerInput(self, input_name):
         # Run once per input key at component init
@@ -460,7 +460,7 @@ class Component:
 
     # Virtual functions
 
-    def c_register_pack(self):
+    def c_register_setup(self):
         return
 
     def c_getStateData(self):
@@ -506,7 +506,7 @@ class MainComponent(Component):
         #ori = mathutils.Euler((data[5], data[6], data[7]))
         #input_state = data[8]
 
-        comp = self.mgr.spawnComponentByIndex(net_id, comp_index)
+        self.mgr.spawnComponentByIndex(net_id, comp_index)
         #comp.setInputState(input_state)
 
     def setClientID(self, data):
