@@ -78,6 +78,10 @@ class Player(Component):
 
     def c_update(self, dt):
         Component.c_update(self, dt)
+
+        if self.current_block_id == 0:
+            return
+
         block = self.mgr.getComponent(self.current_block_id)
 
         getInput = self.getInput
