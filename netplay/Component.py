@@ -3,6 +3,11 @@ import mathutils
 from . import Pack
 
 
+def all_subclasses(cls):
+    return cls.__subclasses__() + [g for s in cls.__subclasses__()
+                                    for g in all_subclasses(s)]
+
+
 class ServerComponentSystem:
 
     def __init__(self, game):
@@ -24,8 +29,12 @@ class ServerComponentSystem:
         self.component_list = []
         self.next_component_index_ = 0
 
-        self.registerComponent(MainComponent, 'main')
+        self.registerComponent(MainComponent)
         self.createMainComponent()
+
+        component_subs = all_subclasses(Component)
+        for cls in component_subs:
+            self.registerComponent(cls)
 
     def createMainComponent(self):
         net_id = self.getNewID()  # Should be 0 every time
@@ -35,8 +44,10 @@ class ServerComponentSystem:
         if net_id != 0:
             print ("ERROR - base component ID is not 0")
 
-    def registerComponent(self, comp, comp_name):
+    def registerComponent(self, comp):
+        comp_name = comp.__name__
         # One-time per component type, both client and server
+        comp.comp_index = self.next_component_index_
         self.component_dict[comp_name] = self.next_component_index_
         self.component_list.append(comp)
         self.next_component_index_ += 1
@@ -81,31 +92,36 @@ class ServerComponentSystem:
         comp_index = self.component_dict[comp_name]
         return self.spawnComponentByIndex(comp_index, pos, ori)
     """
-    
-    def spawnComponent(self, comp_index, pos=[0.0, 0.0, 0.0], rot=[0.0, 0.0, 0.0]):
+
+    def spawnComponent(self, comp_index,
+            pos=[0.0, 0.0, 0.0], rot=[0.0, 0.0, 0.0]):
+
+        if type(comp_index is str):
+            comp_index = self.getComponentIndex(comp_index)
+
         net_id = self.getNewID()
         if net_id is not None:
             comp = self.component_list[comp_index](self, net_id, pos, rot)
             self.active_components_[net_id] = comp
-            
+
             ###### The data
             # comp_index, net_id,
             # posx, posy, posz,
             # rotx, roty, rotz,
             # inputstate
-            
+
             self.MainComponent.packer.pack('addComponent',
                 (net_id, comp_index,
                 pos[0], pos[1], pos[2],
                 rot[0], rot[1], rot[2],
                 comp.getInputState()))
-                
+
             return comp
-            
+
         else:
             print ("Component limit reached")
             return None
-            
+
     def getComponentIndex(self, comp_name):
         return self.component_dict[comp_name]
 
@@ -165,7 +181,7 @@ class ServerComponentSystem:
             elif c is not None:
                 net_id = c.net_id
                 comp_index = c.comp_index
-                
+
                 if c.ob_ is not None:
                     pos = c.ob_.worldPosition
                     rot = c.ob_.worldOrientation.to_euler()
@@ -201,14 +217,14 @@ class ServerComponentSystem:
 
 class ClientComponentSystem(ServerComponentSystem):
 
-    def __init__(self, owner):
+    def __init__(self, game):
         ServerComponentSystem.__init__(self, game)
         self.hostmode = 'client'
         self.client_id = -1
 
     def spawnComponentByIndex(self, net_id, comp_index, pos, ori):
         comp = self.component_list[comp_index](self,
-            net_id, comp_index, pos, ori)
+            net_id, pos, ori)
         self.active_components_[net_id] = comp
 
         if net_id > self.next_active_id_:
@@ -238,7 +254,7 @@ class ClientComponentSystem(ServerComponentSystem):
 
 class Component:
 
-    def __init__(self, mgr, net_id, pos, ori):
+    def __init__(self, mgr, net_id):
         self.mgr = mgr
         self.ob_ = None
         self.net_id = net_id
@@ -246,21 +262,27 @@ class Component:
         # List of clients (by ID) with permission to set input
         self.client_permission_list_ = []
 
+        # Replaces the funky input status dict with a bitmask list
+        self.input_mask = [0] * 32
+
+        # Indexes input keys by a user-defined value
+        self.input_dict = {}
+
+        # Consumed as inputs are registered, valid < 32
+        self.next_input_index_ = 0
+
         # Current input state
-        self.input_state = {}
+        #self.input_state = {}
 
         # Predicted input state for clients with input permission
         # For now it's only for requesting changes
-        self.predicted_input_state = {}
-
-        # Indexes possible input keys by a user-defined value
-        self.input_dict = {}
+        #self.predicted_input_state = {}
 
         # Next input index (32 bit signed int)
         #self.next_input_index_ = 1
         # 1 must always be part of the state for the compression to work,
         # As such 1 is reserved.
-        self.next_input_index_ = 2
+        #self.next_input_index_ = 2
 
         # True when the input state has changed in a frame
         # Used to queue network updates
@@ -276,10 +298,10 @@ class Component:
         # Register the input update packer
         self.packer.registerPack('input_', self.process_input_,
             [Pack.INT])
-            
+
     def getMainObject(self):
         return self.ob_
-        
+
     def setMainObject(self, ob):
         self.ob_ = ob
 
@@ -287,11 +309,23 @@ class Component:
         # Run once per input key at component init
         # The idea is that we can compress the state
         #     of ~30 predefined keys into a single integer
+        """
         if self.next_input_index_ < 2147483647:
             self.input_dict[input_name] = self.next_input_index_
             self.input_state[input_name] = False
             self.predicted_input_state[input_name] = False
             self.next_input_index_ *= 2
+            return True
+        else:
+            print ("Input limit reached")
+            return False
+        """
+        if self.next_input_index_ < 32:
+            index = self.next_input_index_
+            self.input_dict[input_name] = index
+            self.input_mask[index] = 0
+
+            self.next_input_index_ += 1
             return True
         else:
             print ("Input limit reached")
@@ -304,6 +338,7 @@ class Component:
 
     def setInput(self, input_name, state):
         # Called when keys are pressed
+        """
         if self.mgr.hostmode == 'server':
             if self.input_state[input_name] != state:
                 self.input_state[input_name] = state
@@ -313,13 +348,26 @@ class Component:
             if self.predicted_input_state[input_name] != state:
                 self.predicted_input_state[input_name] = state
                 self.input_changed_ = True
+        """
+        if state:
+            state = 1
+        else:
+            state = 0
+
+        index = self.input_dict[input_name]
+        if self.input_mask[index] != state:
+            self.input_mask[index] = state
+            self.input_changed_ = True
 
     def getInput(self, input_name):
-        return self.input_state[input_name]
+        #return self.input_state[input_name]
+        index = self.input_dict[input_name]
+        return self.input_mask[index]
 
     def setInputState(self, input_state):
         self.input_changed_ = True
 
+        """
         keyList = []
         while input_state > 0:
             lastBase = 1
@@ -340,8 +388,16 @@ class Component:
                 self.input_state[input_name] = True
             else:
                 self.input_state[input_name] = False
+        """
+
+        ## Need to confirm
+        mask = list(bin(input_state))
+        mask.remove('b')
+        for i in range(0, len(mask)):
+            self.input_mask[i] = int(mask[i])
 
     def getInputState(self):
+        """
         #state = 0
         # Input ID 1 is reserved to make it work
         state = 1
@@ -350,6 +406,10 @@ class Component:
                 state += value
 
         return state
+        """
+
+        ## Need to confirm
+        return int(''.join(map(str, self.input_mask)))
 
     def getPredictedInputState(self):
         #state = 0
@@ -400,6 +460,8 @@ class Component:
             return False
 
     def update(self, dt):
+        return
+        """
         if self.input_changed_:
             self.input_changed_ = False
             if self.mgr.hostmode == 'client':
@@ -410,14 +472,15 @@ class Component:
             else:
                 state = self.getInputState()
                 self.packer.pack('input_', [state])
+        """
 
     def server_update(self, dt):
-        None
+        return
 
 
 class MainComponent(Component):
-    def __init__(self, mgr, net_id, pos, ori):
-        Component.__init__(self, mgr, net_id, pos, ori)
+    def __init__(self, mgr, net_id, pos, rot):
+        Component.__init__(self, mgr, net_id)
         self.ob_ = mgr.owner
 
         # new_net_id, new_net_id

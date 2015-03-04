@@ -142,7 +142,10 @@ class TestPack(unittest.TestCase):
         
         self.assertEqual(expected_data, newdata, "Packed data does not match")
         
-            
-        
+
+class TestInput(unittest.TestCase):
+    def test_input_mask_(self):
+        None
+    
 if __name__ == '__main__':
     unittest.main()

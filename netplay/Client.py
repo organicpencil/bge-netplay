@@ -12,7 +12,7 @@ class Client:
         self.server_port = server_port
 
         self.connected = False
-        self.network = ENetWrapper.ENetWrapper(server=False)
+        self.network = enetwrapper.ENetWrapper(server=False)
         self.serverPeer = self.network.host.connect(
                 enet.Address(server_ip, server_port), 1)
 

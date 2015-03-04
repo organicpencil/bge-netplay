@@ -17,6 +17,7 @@ STRING = 'STRING'
 STRING_LENGTH_TYPE = UCHAR
 STRING_LENGTH_MAX = 255
 
+
 class DataProcessor:
 
     def __init__(self, callback, datatypes):
@@ -36,14 +37,14 @@ class DataProcessor:
         for i in string_locations:
             # Stores string length
             formatstring += STRING_LENGTH_TYPE
-            
+
             # Could further optimize by ommitting last string length
 
         self.formatstring = formatstring
         self.string_locations = string_locations
 
-    def getBytes(self, comp_id, p_id, data):
-        header = struct.pack('!HH', comp_id, p_id)
+    def getBytes(self, net_id, p_id, data):
+        header = struct.pack('!HH', net_id, p_id)
         if not len(self.string_locations):
             # Contains no strings
             st = struct.pack(self.formatstring, *data)
@@ -69,7 +70,7 @@ class DataProcessor:
                     print ("WARNING - Packed string was truncated, %d character limit" % STRING_LENGTH_MAX)
                     s = s[:STRING_LENGTH_MAX]
                     length = STRING_LENGTH_MAX
-                    
+
                 packdata.append(length)
                 text += bytes(s, 'UTF-8')
 
@@ -92,8 +93,8 @@ class DataProcessor:
             text = bytes.decode(bdata[sz:], 'UTF-8')
 
             string_count = len(self.string_locations)
-            len_count = string_count# - 1
-            
+            len_count = string_count  # - 1
+
             ## Number shorts @ the end of data for string length
             #if len_count == 0:
             #    # Only one string
@@ -115,10 +116,10 @@ class DataProcessor:
                 strings.append(text[:L])
                 text = text[L:]
                 i += 1
-                
+
             # Remove trailing string length data
             data = data[:len(data) - len_count]
-            
+
             # Then insert in the correct locations
             i = 0
             for L in self.string_locations:
@@ -148,7 +149,7 @@ class Packer:
         dataprocessor = self.pack_list[p_id]
 
         # Will be pulled by the component manager
-        qdata = dataprocessor.getBytes(self.component.comp_id, p_id, data)
+        qdata = dataprocessor.getBytes(self.component.net_id, p_id, data)
         self.queued_data.append(qdata)
 
     def process(self, p_id, bdata):
