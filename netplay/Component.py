@@ -296,11 +296,11 @@ class Component:
 
         # Register the input permission packer
         self.packer.registerPack('permission_', self.process_permission_,
-            [Pack.INT, Pack.INT])
+            [Pack.USHORT, Pack.UCHAR])
 
         # Register the input update packer
         self.packer.registerPack('input_', self.process_input_,
-            [Pack.INT])
+            [Pack.UINT])
 
         self.c_register_setup()
 
@@ -335,7 +335,7 @@ class Component:
         self.input_dict[input_name] = input_index
         self.input_state[input_name] = False
 
-    def setInput(self, input_name, state):
+    def setInput(self, input_name, state, replicate=True):
         # Called when keys are pressed
         """
         if self.mgr.hostmode == 'server':
@@ -356,7 +356,10 @@ class Component:
         index = self.input_dict[input_name]
         if self.input_mask[index] != state:
             self.input_mask[index] = state
-            self.input_changed_ = True
+            # Save some bandwidth
+            # Replication isn't wanted when set on the component
+            if replicate:
+                self.input_changed_ = True
 
     def getInput(self, input_name):
         #return self.input_state[input_name]
@@ -364,9 +367,9 @@ class Component:
         return self.input_mask[index]
 
     def setInputState(self, input_state):
+        """
         self.input_changed_ = True
 
-        """
         keyList = []
         while input_state > 0:
             lastBase = 1
@@ -389,9 +392,7 @@ class Component:
                 self.input_state[input_name] = False
         """
 
-        ## Need to confirm
-        mask = list(bin(input_state))
-        mask.remove('b')
+        mask = bin(input_state)[2:].zfill(32)
         for i in range(0, len(mask)):
             self.input_mask[i] = int(mask[i])
 
@@ -407,8 +408,7 @@ class Component:
         return state
         """
 
-        ## Need to confirm
-        return int(''.join(map(str, self.input_mask)))
+        return int(''.join(map(str, self.input_mask)), 2)
 
     def getPredictedInputState(self):
         #state = 0
@@ -467,7 +467,6 @@ class Component:
         return None
 
     def c_update(self, dt):
-        return
         """
         if self.input_changed_:
             self.input_changed_ = False
@@ -480,6 +479,15 @@ class Component:
                 state = self.getInputState()
                 self.packer.pack('input_', [state])
         """
+        if self.input_changed_:
+            self.input_changed_ = False
+            if self.mgr.hostmode == 'client':
+                if self.mgr.game.systems['Input'].input_target is self:
+                    state = self.getInputState()
+                    self.packer.pack('input_', [state])
+            else:
+                state = self.getInputState()
+                self.packer.pack('input_', [state])
 
     def c_server_update(self, dt):
         return
