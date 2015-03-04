@@ -52,7 +52,7 @@ class Game:
             self.generate()
 
         else:
-            self.systems['Client'] = netplay.Client(self)
+            self.systems['Client'] = netplay.Client(self, server_ip = owner['ip'])
             self.systems['Component'] = netplay.ClientComponentSystem(self)
 
         self.systems['Input'] = InputSystem(self)
