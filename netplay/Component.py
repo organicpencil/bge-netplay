@@ -38,7 +38,7 @@ class ServerComponentSystem:
 
     def createMainComponent(self):
         net_id = self.getNewID()  # Should be 0 every time
-        self.MainComponent = MainComponent(self, 0, None, None)
+        self.MainComponent = MainComponent(self, 0)
         self.active_components_[net_id] = self.MainComponent
 
         if net_id != 0:
@@ -93,15 +93,14 @@ class ServerComponentSystem:
         return self.spawnComponentByIndex(comp_index, pos, ori)
     """
 
-    def spawnComponent(self, comp_index,
-            pos=[0.0, 0.0, 0.0], rot=[0.0, 0.0, 0.0]):
+    def spawnComponent(self, comp_index):
 
         if type(comp_index is str):
             comp_index = self.getComponentIndex(comp_index)
 
         net_id = self.getNewID()
         if net_id is not None:
-            comp = self.component_list[comp_index](self, net_id, pos, rot)
+            comp = self.component_list[comp_index](self, net_id)
             self.active_components_[net_id] = comp
 
             ###### The data
@@ -111,10 +110,7 @@ class ServerComponentSystem:
             # inputstate
 
             self.MainComponent.packer.pack('addComponent',
-                (net_id, comp_index,
-                pos[0], pos[1], pos[2],
-                rot[0], rot[1], rot[2],
-                comp.getInputState()))
+                (net_id, comp_index))
 
             return comp
 
@@ -182,20 +178,27 @@ class ServerComponentSystem:
                 net_id = c.net_id
                 comp_index = c.comp_index
 
-                if c.ob_ is not None:
-                    pos = c.ob_.worldPosition
-                    rot = c.ob_.worldOrientation.to_euler()
-                else:
-                    pos = [0.0, 0.0, 0.0]
-                    rot = [0.0, 0.0, 0.0]
+                #if c.ob_ is not None:
+                #    pos = c.ob_.worldPosition
+                #    rot = c.ob_.worldOrientation.to_euler()
+                #else:
+                #    pos = [0.0, 0.0, 0.0]
+                #    rot = [0.0, 0.0, 0.0]
 
-                data = [net_id, comp_index,
-                    pos[0], pos[1], pos[2],
-                    rot[0], rot[1], rot[2],
-                    c.getInputState()]
+                #data = [net_id, comp_index,
+                #    pos[0], pos[1], pos[2],
+                #    rot[0], rot[1], rot[2],
+                #    c.getInputState()]
+
+                data = [net_id, comp_index]
 
                 bdata_list.append(
                     dataprocessor.getBytes(main_id, p_id, data))
+
+                ## Need to send state before continuing
+                statedata = c.c_getStateData()
+                if statedata is not None:
+                    bdata_list.append(statedata)
 
             i += 1
 
@@ -209,8 +212,8 @@ class ServerComponentSystem:
                 break
 
             if c is not None:
-                c.update(dt)
-                c.server_update(dt)
+                c.c_update(dt)
+                c.c_server_update(dt)
 
             i += 1
 
@@ -222,9 +225,9 @@ class ClientComponentSystem(ServerComponentSystem):
         self.hostmode = 'client'
         self.client_id = -1
 
-    def spawnComponentByIndex(self, net_id, comp_index, pos, ori):
+    def spawnComponentByIndex(self, net_id, comp_index):
         comp = self.component_list[comp_index](self,
-            net_id, pos, ori)
+            net_id)
         self.active_components_[net_id] = comp
 
         if net_id > self.next_active_id_:
@@ -232,7 +235,7 @@ class ClientComponentSystem(ServerComponentSystem):
 
         return comp
 
-    def spawnComponent(self, comp_name, pos, ori):
+    def spawnComponent(self, comp_name):
         print ("WARNING - spawnComponent not implemented on client")
 
     def freeComponent(self, comp):
@@ -247,7 +250,7 @@ class ClientComponentSystem(ServerComponentSystem):
                 break
 
             if c is not None:
-                c.update(dt)
+                c.c_update(dt)
 
             i += 1
 
@@ -299,11 +302,7 @@ class Component:
         self.packer.registerPack('input_', self.process_input_,
             [Pack.INT])
 
-    def getMainObject(self):
-        return self.ob_
-
-    def setMainObject(self, ob):
-        self.ob_ = ob
+        self.c_register_pack()
 
     def registerInput(self, input_name):
         # Run once per input key at component init
@@ -459,7 +458,15 @@ class Component:
             print ("Did not have permission")
             return False
 
-    def update(self, dt):
+    # Virtual functions
+
+    def c_register_pack(self):
+        return
+
+    def c_getStateData(self):
+        return None
+
+    def c_update(self, dt):
         return
         """
         if self.input_changed_:
@@ -474,12 +481,12 @@ class Component:
                 self.packer.pack('input_', [state])
         """
 
-    def server_update(self, dt):
+    def c_server_update(self, dt):
         return
 
 
 class MainComponent(Component):
-    def __init__(self, mgr, net_id, pos, rot):
+    def __init__(self, mgr, net_id):
         Component.__init__(self, mgr, net_id)
         self.ob_ = mgr.owner
 
@@ -487,10 +494,7 @@ class MainComponent(Component):
         # posx, posy, posz
         # rotx, roty, rotz
         self.packer.registerPack('addComponent', self.addComponent,
-            [Pack.USHORT, Pack.USHORT,
-            Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
-            Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
-            Pack.INT])
+            [Pack.USHORT, Pack.USHORT])
 
         self.packer.registerPack('setClientID', self.setClientID,
             [Pack.INT])
@@ -498,12 +502,12 @@ class MainComponent(Component):
     def addComponent(self, data):
         net_id = data[0]
         comp_index = data[1]
-        pos = [data[2], data[3], data[4]]
-        ori = mathutils.Euler((data[5], data[6], data[7]))
-        input_state = data[8]
+        #pos = [data[2], data[3], data[4]]
+        #ori = mathutils.Euler((data[5], data[6], data[7]))
+        #input_state = data[8]
 
-        comp = self.mgr.spawnComponentByIndex(net_id, comp_index, pos, ori)
-        comp.setInputState(input_state)
+        comp = self.mgr.spawnComponentByIndex(net_id, comp_index)
+        #comp.setInputState(input_state)
 
     def setClientID(self, data):
         self.mgr.client_id = data[0]
