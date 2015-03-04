@@ -76,26 +76,24 @@ class Player(Component):
         self.current_block_id = net_id
 
     def c_update(self, dt):
-        block = None
-        if self.current_block_id != 0:
-            return
-        else:
-            block = self.mgr.getComponent(self.current_block_id)
+        Component.c_update(self, dt)
+        block = self.mgr.getComponent(self.current_block_id)
 
         getInput = self.getInput
 
         if getInput('primary_pressed'):
-            self.setInput('primary_pressed', 0)
+            print ('primary pressed')
+            self.setInput('primary_pressed', 0, False)
             self.holding = True
             block.addHold()
 
         if getInput('primary_released'):
-            self.setInput('primary_released', 0)
+            self.setInput('primary_released', 0, False)
             self.holding = False
             block.open()
 
         if getInput('secondary_pressed'):
-            self.setInput('secondary_pressed', 0)
+            self.setInput('secondary_pressed', 0, False)
             block.flag()
 
 
@@ -142,8 +140,6 @@ class Block(Component):
         self.registerInput('flag')
 
         self.isMine = False
-        self.opened = 0
-        self.flagged = 0
         self.count = 0
 
         # Create the GameObject
