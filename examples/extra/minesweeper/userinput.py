@@ -69,7 +69,7 @@ class InputSystem:
 
             if component.current_block_id == 0 or component.current_block_id != comp.net_id:
                 component.setBlock([comp.net_id])
-                component.packer.pack('current_block', [comp.net_id])
+                component._packer.pack('set_current_block', [comp.net_id])
 
         if events[iDict['primary']] == JUST_ACTIVATED:
             component.setInput('primary_pressed', 1)

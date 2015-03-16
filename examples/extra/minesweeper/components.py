@@ -10,24 +10,66 @@ from netplay import Component, Pack
 ## Call these on the server
 def SPAWN_PLAYER(mgr, playername):
     comp = mgr.spawnComponent('Player')
-    comp.setup([playername, 0])
-    comp.send_state()
+    comp.attributes['playername'] = playername
+    comp.attributes['current_block_id'] = 0
+    comp._send_attributes()
     return comp
 
 
 def SPAWN_BLOCK(mgr, x, y):
     comp = mgr.spawnComponent('Block')
-    comp.setup([x, y, 0, 0, 0, 0, 0, 0])
-    comp.send_state()
+    a = comp.attributes
+    a['x'] = x
+    a['y'] = y
+    a['over'] = 0
+    a['held'] = 0
+    a['opened'] = 0
+    a['flagged'] = 0
+    a['count'] = 0
+    a['isMine'] = 0
+    comp._send_attributes()
     return comp
 ##
 
 
 class Player(Component):
-    def c_register_setup(self):
-        self.packer.registerPack('setup', self.setup,
-            [Pack.STRING, Pack.USHORT])
+    def c_register(self):
+        # Attributes are used for spawning the object on clients
+        # These should ONLY be defined once and in c_register
+        self.registerAttribute('playername', Pack.STRING)
+        self.registerAttribute('current_block_id', Pack.USHORT)
+        #self.registerRPC('setup', self.setup,
+        #    [Pack.STRING, Pack.USHORT])
 
+        # You can later get/set the attributes like so:
+        #self.attributes['playername'] = "Bob Johnson"
+        # However, they will only sync when the object is created on a client.
+        # For in-game changes you need an RPC as well.
+        # This was NOT made automatic in the interest of bandwidth optimization.
+
+        # RPCs are called during the game
+        self.registerRPC('set_current_block', self.setBlock, [Pack.USHORT])
+
+        # Inputs are intended to efficiently sync keystates as a bitmask.
+        # Up to 32 keys can be registered.
+        self.registerInput('primary_pressed')
+        self.registerInput('primary_released')
+        self.registerInput('secondary_pressed')
+        # You can accomplish the same with RPCs if desired.
+        # In fact inputs are just an abstraction to this built-in RPC:
+        #self.registerRPC('_input', self._process_input, [Pack.UINT])
+
+    def c_setup(self):
+        # Runs when the objected is spawned on the client
+
+        # Access attributes as needed.
+        self.playername = self.attributes['playername']
+        self.current_block_id = self.attributes['current_block_id']
+
+        # True when mouse is held
+        self.holding = False
+
+    """
     def c_getStateData(self):
         p_id = self.packer.pack_index['setup']
         dataprocessor = self.packer.pack_list[p_id]
@@ -57,6 +99,7 @@ class Player(Component):
 
         self.packer.registerPack('current_block', self.setBlock,
             [Pack.USHORT])
+    """
 
     def setBlock(self, data):
         if self.current_block_id != 0:
@@ -102,10 +145,44 @@ class Player(Component):
 
 
 class Block(Component):
-    def c_register_setup(self):
-        self.packer.registerPack('setup', self.setup,
-            [Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR])
+    def c_register(self):
+        self.registerAttribute('x', Pack.UCHAR)
+        self.registerAttribute('y', Pack.UCHAR)
+        self.registerAttribute('over', Pack.UCHAR)
+        self.registerAttribute('held', Pack.UCHAR)
+        self.registerAttribute('opened', Pack.UCHAR)
+        self.registerAttribute('flagged', Pack.UCHAR)
+        self.registerAttribute('count', Pack.UCHAR)
+        self.registerAttribute('isMine', Pack.UCHAR)
+        #self.packer.registerPack('setup', self.setup,
+        #    [Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR])
 
+        self.registerRPC('open', self.process_open_signal,
+            [Pack.UCHAR, Pack.UCHAR])
+
+    def c_setup(self):
+        attributes = self.attributes
+
+        self.x = attributes['x']
+        self.y = attributes['y']
+        self.over = attributes['over']
+        self.held = attributes['held']
+        self.opened = attributes['opened']
+        self.flagged = attributes['flagged']
+        self.count = attributes['count']
+        self.isMine = attributes['isMine']
+
+        # Create the game object
+        scene = bge.logic.getCurrentScene()
+        ob = scene.addObject('Block', self.mgr.owner)
+        ob.worldPosition = [self.x, self.y, 0.0]
+
+        self.ob = ob
+        ob['component'] = self
+
+        self.refresh()
+
+    """
     def c_getStateData(self):
         p_id = self.packer.pack_index['setup']
         dataprocessor = self.packer.pack_list[p_id]
@@ -123,17 +200,6 @@ class Block(Component):
     def send_state(self):
         # Sent on initial creation (c_getStateData is used for new clients)
         self.packer.pack('setup', [self.x, self.y, self.over, self.held, self.opened, self.flagged, self.count, self.isMine])
-
-        """ Replicated variables would be cool
-        # Changes to these variables automatically replicate to other clients
-        # (data type, initial value)
-        self.x = self.packer.replicate(Pack.UCHAR, 0)
-        self.y = self.packer.replicate(Pack.UCHAR, 0)
-        self.over = self.packer.replicate(Pack.UCHAR, 0)
-        self.held = self.packer.replicate(Pack.UCHAR, 0)
-        self.opened = self.packer.replicate(Pack.UCHAR, 0)
-        self.flagged = self.packer.replicate(Pack.UCHAR, 0)
-        """
 
     def setup(self, data):
         self.x = data[0]
@@ -165,6 +231,7 @@ class Block(Component):
         ob['component'] = self
 
         self.refresh()
+    """
 
     def addHover(self):
         if self.opened or self.flagged:
@@ -186,6 +253,8 @@ class Block(Component):
         if self.over == 0:
             self.ob.replaceMesh('Block')
 
+        self.attributes['over'] = self.over
+
     def addHold(self):
         if self.opened or self.flagged:
             return
@@ -193,6 +262,8 @@ class Block(Component):
         self.held += 1
         if self.held == 1:
             self.ob.replaceMesh('Block_pressed')
+
+        self.attributes['held'] = self.held
 
     def removeHold(self):
         if self.opened or self.flagged:
@@ -205,6 +276,8 @@ class Block(Component):
         self.held -= 1
         if self.held == 0:
             self.ob.replaceMesh('Block_hover')
+
+        self.attributes['held'] = self.held
 
     def open(self):
         if self.opened or self.flagged:
@@ -231,7 +304,7 @@ class Block(Component):
                 text['Text'] = str(self.count)
                 text.color = self.mgr.game.colors[self.count]
 
-            self.packer.pack('open', [self.count, self.isMine])
+            self._packer.pack('open', [self.count, self.isMine])
 
             # And recursively open adjacent blocks if count = 0
             if self.count == 0:
@@ -246,15 +319,20 @@ class Block(Component):
                         if (0 <= x < 10) and (0 <= y < 10):
                             other = self.mgr.game.grid[x][y]
                             other.held = 1
+                            other.attributes['held'] = other.held
                             other.open()
 
                             # Others need to be signalled as well
-                            other.packer.pack('open', [other.count, other.isMine])
+                            other._packer.pack('open', [other.count, other.isMine])
+
+        self.attributes['opened'] = self.opened
+        self.attributes['count'] = self.count
 
     def process_open_signal(self, data):
         self.count = data[0]
         self.isMine = data[1]
         self.opened = 1
+        self.attributes['opened'] = self.opened
 
         new = self.ob.scene.addObject('Uncovered', self.ob)
         self.ob.endObject()
@@ -288,6 +366,10 @@ class Block(Component):
             self.flagged = 1
             self.ob.replaceMesh('Block_locked')
 
+        self.attributes['over'] = self.over
+        self.attributes['held'] = self.held
+        self.attributes['flagged'] = self.flagged
+
     def refresh(self):
         if self.opened:
             self.process_open_signal([self.count, self.isMine])
@@ -302,6 +384,9 @@ class Block(Component):
             self.over = 0
             self.held = 0
             self.ob.replaceMesh('Block_locked')
+
+            self.attributes['over'] = self.over
+            self.attributes['held'] = self.held
             return
 
         if self.held:

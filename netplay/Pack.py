@@ -138,11 +138,19 @@ class Packer:
 
         self.queued_data = []
 
-    def registerPack(self, key, callback, datatypes):
+    def registerRPC(self, key, callback, datatypes):
         dataprocessor = DataProcessor(callback, datatypes)
 
-        self.pack_index[key] = len(self.pack_list)
-        self.pack_list.append(dataprocessor)
+        existing = self.pack_index.get(key, None)
+
+        if existing is None:
+            self.pack_index[key] = len(self.pack_list)
+            self.pack_list.append(dataprocessor)
+        else:
+            # Already exists... overwrite and throw warning
+            self.pack_list[existing] = dataprocessor
+            if key != '_attributes':
+                print ("WARNING - RPC dataprocessor overwritten")
 
     def pack(self, key, data):
         p_id = self.pack_index[key]

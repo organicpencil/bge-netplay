@@ -179,7 +179,7 @@ class Server:
                     if component.hasPermission(peerID):
                         # Strip the IDs and process
                         data = bdata[4:]
-                        component.packer.process(p_id, data)
+                        component._packer.process(p_id, data)
 
                         # Forward the command to other clients
                         k = 0

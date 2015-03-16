@@ -75,7 +75,7 @@ class ServerComponentSystem:
             # posx, posy, posz
             # rotx, roty, rotz
 
-            self.MainComponent.packer.pack('addComponent',
+            self.MainComponent._packer.pack('addComponent',
                     [net_id, comp_index,
                     pos[0], pos[1], pos[2],
                     ori[0], ori[1], ori[2],
@@ -109,7 +109,7 @@ class ServerComponentSystem:
             # rotx, roty, rotz,
             # inputstate
 
-            self.MainComponent.packer.pack('addComponent',
+            self.MainComponent._packer.pack('addComponent',
                 (net_id, comp_index))
 
             return comp
@@ -142,8 +142,8 @@ class ServerComponentSystem:
                 break
 
             if c is not None:
-                bdata_list.append(c.packer.queued_data)
-                c.packer.queued_data = []
+                bdata_list.append(c._packer.queued_data)
+                c._packer.queued_data = []
 
             i += 1
 
@@ -153,7 +153,7 @@ class ServerComponentSystem:
         bdata_list = []
 
         key = 'addComponent'
-        packer = self.MainComponent.packer
+        packer = self.MainComponent._packer
         main_id = self.MainComponent.net_id
         p_id = packer.pack_index[key]
         dataprocessor = packer.pack_list[p_id]
@@ -196,9 +196,16 @@ class ServerComponentSystem:
                     dataprocessor.getBytes(main_id, p_id, data))
 
                 ## Need to send state before continuing
+                """
                 statedata = c.c_getStateData()
                 if statedata is not None:
                     bdata_list.append(statedata)
+                """
+                attrdata = c._get_attribute_data()
+                if attrdata is not None:
+                    bdata_list.append(attrdata)
+
+                print ("FIXME - sync input state for spawned objects")
 
             i += 1
 
@@ -292,17 +299,70 @@ class Component:
         self.input_changed_ = False
 
         # Data packer for network play
-        self.packer = Pack.Packer(self)
+        self._packer = Pack.Packer(self)
 
-        # Register the input permission packer
-        self.packer.registerPack('permission_', self.process_permission_,
-            [Pack.USHORT, Pack.UCHAR])
+        self.attributes = {}
+        self._attribute_list = []
+
+        # Register the initial attribute packer
+        # Ideally replaced during c_register
+        self.registerRPC('_attributes', self._process_attributes, [Pack.UINT])
 
         # Register the input update packer
-        self.packer.registerPack('input_', self.process_input_,
+        self.registerRPC('_input', self._process_input,
             [Pack.UINT])
 
-        self.c_register_setup()
+        # Register the permission packer
+        self.registerRPC('_permission', self._process_permission,
+            [Pack.USHORT, Pack.UCHAR])
+
+        self.c_register()
+
+    def registerAttribute(self, key, datatype):
+        attrs = self._attribute_list
+        attrs.append([key, datatype])
+
+        datatype_list = []
+        for k, d in attrs:
+            datatype_list.append(d)
+
+        # Rebuild attribute packer
+        self.registerRPC('_attributes', self._process_attributes, datatype_list)
+
+    def _process_attributes(self, data):
+        attrs = self._attribute_list
+
+        attributes = self.attributes
+        i = 0
+        for k, d in attrs:
+            attributes[k] = data[i]
+            i += 1
+
+        self.c_setup()
+
+    def _get_attribute_data(self):
+        p_id = self._packer.pack_index['_attributes']
+        dataprocessor = self._packer.pack_list[p_id]
+
+        attrs = self._attribute_list
+
+        data = []
+        for k, d in attrs:
+            data.append(self.attributes[k])
+
+        return dataprocessor.getBytes(self.net_id, p_id, data)
+
+    def _send_attributes(self):
+        data = []
+        for k, d in self._attribute_list:
+            data.append(self.attributes[k])
+
+        self._packer.pack('_attributes', data)
+
+        self.c_setup()
+
+    def registerRPC(self, key, callback, datatypes):
+        self._packer.registerRPC(key, callback, datatypes)
 
     def registerInput(self, input_name):
         # Run once per input key at component init
@@ -420,7 +480,7 @@ class Component:
 
         return state
 
-    def process_permission_(self, data):
+    def _process_permission(self, data):
         client_id = data[0]
         allowed = data[1]
         if allowed:
@@ -428,7 +488,7 @@ class Component:
         else:
             self.takePermission(client_id)
 
-    def process_input_(self, data):
+    def _process_input(self, data):
         state = data[0]
         self.setInputState(state)
 
@@ -443,7 +503,7 @@ class Component:
             print ("Giving permission")
             self.client_permission_list_.append(client_id)
             if self.mgr.hostmode == 'server':
-                self.packer.pack('permission_', [client_id, 1])
+                self._packer.pack('_permission', [client_id, 1])
             elif client_id == self.mgr.client_id:
                 self.mgr.game.systems['Input'].setTarget(self)
             return True
@@ -453,18 +513,18 @@ class Component:
             print ("Taking permission")
             self.client_permission_list_.remove(client_id)
             if self.mgr.hostmode == 'server':
-                self.packer.pack('permission_', [client_id, 0])
+                self._packer.pack('_permission', [client_id, 0])
         else:
             print ("Did not have permission")
             return False
 
     # Virtual functions
 
-    def c_register_setup(self):
+    def c_register(self):
         return
 
-    def c_getStateData(self):
-        return None
+    def c_setup(self):
+        return
 
     def c_update(self, dt):
         """
@@ -473,21 +533,21 @@ class Component:
             if self.mgr.hostmode == 'client':
                 if self.mgr.game.systems['Input'].input_target is self:
                     state = self.getPredictedInputState()
-                    self.packer.pack('input_', [state])
+                    self._packer.pack('input_', [state])
 
             else:
                 state = self.getInputState()
-                self.packer.pack('input_', [state])
+                self._packer.pack('input_', [state])
         """
         if self.input_changed_:
             self.input_changed_ = False
             if self.mgr.hostmode == 'client':
                 if self.mgr.game.systems['Input'].input_target is self:
                     state = self.getInputState()
-                    self.packer.pack('input_', [state])
+                    self._packer.pack('_input', [state])
             else:
                 state = self.getInputState()
-                self.packer.pack('input_', [state])
+                self._packer.pack('_input', [state])
 
     def c_server_update(self, dt):
         return
@@ -501,10 +561,10 @@ class MainComponent(Component):
         # new_net_id, new_net_id
         # posx, posy, posz
         # rotx, roty, rotz
-        self.packer.registerPack('addComponent', self.addComponent,
+        self._packer.registerRPC('addComponent', self.addComponent,
             [Pack.USHORT, Pack.USHORT])
 
-        self.packer.registerPack('setClientID', self.setClientID,
+        self._packer.registerRPC('setClientID', self.setClientID,
             [Pack.INT])
 
     def addComponent(self, data):
