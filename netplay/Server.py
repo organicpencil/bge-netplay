@@ -148,7 +148,7 @@ class Server:
 
         cmgr = self.owner['Game'].systems['Component']
 
-        for i in range(0, self.maxclients + len(backlog)):
+        while True:
             if len(backlog):
                 event = backlog.popleft()
             else:
