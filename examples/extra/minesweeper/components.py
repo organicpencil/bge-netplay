@@ -128,8 +128,8 @@ class Block(Component):
         self.setAttribute('held', self.held)
         self.setAttribute('opened', self.opened)
         self.setAttribute('flagged', self.flagged)
-        self.setAttribute('count', self.count)
         if self.opened:
+            self.setAttribute('count', self.count)
             self.setAttribute('isMine', self.isMine)
 
     def c_setup(self):
