@@ -10,15 +10,15 @@ from netplay import Component, Pack
 ## Call these on the server
 def SPAWN_PLAYER(mgr, playername):
     comp = mgr.spawnComponent('Player')
-    comp.attributes['playername'] = playername
-    comp.attributes['current_block_id'] = 0
+    comp._attributes['playername'] = playername
+    comp._attributes['current_block_id'] = 0
     comp._send_attributes()
     return comp
 
 
 def SPAWN_BLOCK(mgr, x, y):
     comp = mgr.spawnComponent('Block')
-    a = comp.attributes
+    a = comp._attributes
     a['x'] = x
     a['y'] = y
     a['over'] = 0
@@ -42,7 +42,7 @@ class Player(Component):
         #    [Pack.STRING, Pack.USHORT])
 
         # You can later get/set the attributes like so:
-        #self.attributes['playername'] = "Bob Johnson"
+        #self._attributes['playername'] = "Bob Johnson"
         # However, they will only sync when the object is created on a client.
         # For in-game changes you need an RPC as well.
         # This was NOT made automatic in the interest of bandwidth optimization.
@@ -63,8 +63,8 @@ class Player(Component):
         # Runs when the objected is spawned on the client
 
         # Access attributes as needed.
-        self.playername = self.attributes['playername']
-        self.current_block_id = self.attributes['current_block_id']
+        self.playername = self._attributes['playername']
+        self.current_block_id = self._attributes['current_block_id']
 
         # True when mouse is held
         self.holding = False
@@ -161,7 +161,7 @@ class Block(Component):
             [Pack.UCHAR, Pack.UCHAR])
 
     def c_setup(self):
-        attributes = self.attributes
+        attributes = self._attributes
 
         self.x = attributes['x']
         self.y = attributes['y']
@@ -253,7 +253,7 @@ class Block(Component):
         if self.over == 0:
             self.ob.replaceMesh('Block')
 
-        self.attributes['over'] = self.over
+        self._attributes['over'] = self.over
 
     def addHold(self):
         if self.opened or self.flagged:
@@ -263,7 +263,7 @@ class Block(Component):
         if self.held == 1:
             self.ob.replaceMesh('Block_pressed')
 
-        self.attributes['held'] = self.held
+        self._attributes['held'] = self.held
 
     def removeHold(self):
         if self.opened or self.flagged:
@@ -277,7 +277,7 @@ class Block(Component):
         if self.held == 0:
             self.ob.replaceMesh('Block_hover')
 
-        self.attributes['held'] = self.held
+        self._attributes['held'] = self.held
 
     def open(self):
         if self.opened or self.flagged:
@@ -319,20 +319,20 @@ class Block(Component):
                         if (0 <= x < 10) and (0 <= y < 10):
                             other = self.mgr.game.grid[x][y]
                             other.held = 1
-                            other.attributes['held'] = other.held
+                            other._attributes['held'] = other.held
                             other.open()
 
                             # Others need to be signalled as well
                             other._packer.pack('open', [other.count, other.isMine])
 
-        self.attributes['opened'] = self.opened
-        self.attributes['count'] = self.count
+        self._attributes['opened'] = self.opened
+        self._attributes['count'] = self.count
 
     def process_open_signal(self, data):
         self.count = data[0]
         self.isMine = data[1]
         self.opened = 1
-        self.attributes['opened'] = self.opened
+        self._attributes['opened'] = self.opened
 
         new = self.ob.scene.addObject('Uncovered', self.ob)
         self.ob.endObject()
@@ -366,9 +366,9 @@ class Block(Component):
             self.flagged = 1
             self.ob.replaceMesh('Block_locked')
 
-        self.attributes['over'] = self.over
-        self.attributes['held'] = self.held
-        self.attributes['flagged'] = self.flagged
+        self._attributes['over'] = self.over
+        self._attributes['held'] = self.held
+        self._attributes['flagged'] = self.flagged
 
     def refresh(self):
         if self.opened:
@@ -385,8 +385,8 @@ class Block(Component):
             self.held = 0
             self.ob.replaceMesh('Block_locked')
 
-            self.attributes['over'] = self.over
-            self.attributes['held'] = self.held
+            self._attributes['over'] = self.over
+            self._attributes['held'] = self.held
             return
 
         if self.held:

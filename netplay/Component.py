@@ -301,7 +301,7 @@ class Component:
         # Data packer for network play
         self._packer = Pack.Packer(self)
 
-        self.attributes = {}
+        self._attributes = {}
         self._attribute_list = []
 
         # Register the initial attribute packer
@@ -332,7 +332,7 @@ class Component:
     def _process_attributes(self, data):
         attrs = self._attribute_list
 
-        attributes = self.attributes
+        attributes = self._attributes
         i = 0
         for k, d in attrs:
             attributes[k] = data[i]
@@ -348,14 +348,14 @@ class Component:
 
         data = []
         for k, d in attrs:
-            data.append(self.attributes[k])
+            data.append(self._attributes[k])
 
         return dataprocessor.getBytes(self.net_id, p_id, data)
 
     def _send_attributes(self):
         data = []
         for k, d in self._attribute_list:
-            data.append(self.attributes[k])
+            data.append(self._attributes[k])
 
         self._packer.pack('_attributes', data)
 
