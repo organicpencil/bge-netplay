@@ -58,6 +58,11 @@ class Player(Component):
         # You can accomplish the same with RPCs if desired.
         # In fact inputs are just an abstraction to this built-in RPC:
         #self.registerRPC('_input', self._process_input, [Pack.UINT])
+        
+    def c_refresh_attributes(self):
+        # Runs on server when new clients need information
+        # Only need to update attributes that could have changed
+        self.setAttribute('current_block_id', self.current_block_id)
 
     def c_setup(self):
         # Runs when the objected is spawned on the client
@@ -159,6 +164,15 @@ class Block(Component):
 
         self.registerRPC('open', self.process_open_signal,
             [Pack.UCHAR, Pack.UCHAR])
+            
+    def c_refresh_attributes(self):
+        self.setAttribute('over', self.over)
+        self.setAttribute('held', self.held)
+        self.setAttribute('opened', self.opened)
+        self.setAttribute('flagged', self.flagged)
+        self.setAttribute('count', self.count)
+        if self.opened:
+            self.setAttribute('isMine', self.isMine)
 
     def c_setup(self):
         attributes = self._attributes
@@ -319,20 +333,15 @@ class Block(Component):
                         if (0 <= x < 10) and (0 <= y < 10):
                             other = self.mgr.game.grid[x][y]
                             other.held = 1
-                            other._attributes['held'] = other.held
                             other.open()
 
                             # Others need to be signalled as well
                             other._packer.pack('open', [other.count, other.isMine])
 
-        self._attributes['opened'] = self.opened
-        self._attributes['count'] = self.count
-
     def process_open_signal(self, data):
         self.count = data[0]
         self.isMine = data[1]
         self.opened = 1
-        self._attributes['opened'] = self.opened
 
         new = self.ob.scene.addObject('Uncovered', self.ob)
         self.ob.endObject()
@@ -366,10 +375,6 @@ class Block(Component):
             self.flagged = 1
             self.ob.replaceMesh('Block_locked')
 
-        self._attributes['over'] = self.over
-        self._attributes['held'] = self.held
-        self._attributes['flagged'] = self.flagged
-
     def refresh(self):
         if self.opened:
             self.process_open_signal([self.count, self.isMine])
@@ -384,9 +389,6 @@ class Block(Component):
             self.over = 0
             self.held = 0
             self.ob.replaceMesh('Block_locked')
-
-            self._attributes['over'] = self.over
-            self._attributes['held'] = self.held
             return
 
         if self.held:

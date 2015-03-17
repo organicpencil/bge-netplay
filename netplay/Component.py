@@ -201,6 +201,7 @@ class ServerComponentSystem:
                 if statedata is not None:
                     bdata_list.append(statedata)
                 """
+                c.c_refresh_attributes()
                 attrdata = c._get_attribute_data()
                 if attrdata is not None:
                     bdata_list.append(attrdata)
@@ -328,6 +329,9 @@ class Component:
 
         # Rebuild attribute packer
         self.registerRPC('_attributes', self._process_attributes, datatype_list)
+        
+    def setAttribute(self, key, value):
+        self._attributes[key] = value
 
     def _process_attributes(self, data):
         attrs = self._attribute_list
@@ -521,6 +525,9 @@ class Component:
     # Virtual functions
 
     def c_register(self):
+        return
+        
+    def c_refresh_attributes(self):
         return
 
     def c_setup(self):
