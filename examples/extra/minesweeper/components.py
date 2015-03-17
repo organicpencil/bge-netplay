@@ -38,14 +38,6 @@ class Player(Component):
         # These should ONLY be defined once and in c_register
         self.registerAttribute('playername', Pack.STRING)
         self.registerAttribute('current_block_id', Pack.USHORT)
-        #self.registerRPC('setup', self.setup,
-        #    [Pack.STRING, Pack.USHORT])
-
-        # You can later get/set the attributes like so:
-        #self._attributes['playername'] = "Bob Johnson"
-        # However, they will only sync when the object is created on a client.
-        # For in-game changes you need an RPC as well.
-        # This was NOT made automatic in the interest of bandwidth optimization.
 
         # RPCs are called during the game
         self.registerRPC('set_current_block', self.setBlock, [Pack.USHORT])
@@ -73,38 +65,6 @@ class Player(Component):
 
         # True when mouse is held
         self.holding = False
-
-    """
-    def c_getStateData(self):
-        p_id = self.packer.pack_index['setup']
-        dataprocessor = self.packer.pack_list[p_id]
-        data = [self.playername, self.current_block_id]
-
-        return dataprocessor.getBytes(self.net_id, p_id, data)
-
-    def send_state(self):
-        # Sent to each client once, not the new clients though...
-        # Much duplication with the above function
-        self.packer.pack('setup', [self.playername, self.current_block_id])
-
-    def setup(self, data):
-        playername = data[0]
-        self.current_block_id = data[1]  # Currently hovered block
-
-        print (playername)
-
-        self.registerInput('primary_pressed')
-        self.registerInput('primary_released')
-        self.registerInput('secondary_pressed')
-
-        # True when mouse is held
-        self.holding = False
-
-        self.playername = playername
-
-        self.packer.registerPack('current_block', self.setBlock,
-            [Pack.USHORT])
-    """
 
     def setBlock(self, data):
         if self.current_block_id != 0:
@@ -159,8 +119,6 @@ class Block(Component):
         self.registerAttribute('flagged', Pack.UCHAR)
         self.registerAttribute('count', Pack.UCHAR)
         self.registerAttribute('isMine', Pack.UCHAR)
-        #self.packer.registerPack('setup', self.setup,
-        #    [Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR, Pack.UCHAR])
 
         self.registerRPC('open', self.process_open_signal,
             [Pack.UCHAR, Pack.UCHAR])
@@ -195,58 +153,7 @@ class Block(Component):
         ob['component'] = self
 
         self.refresh()
-
-    """
-    def c_getStateData(self):
-        p_id = self.packer.pack_index['setup']
-        dataprocessor = self.packer.pack_list[p_id]
-
-        if self.opened:
-            count = self.count
-            isMine = self.isMine
-        else:
-            count = 0
-            isMine = 0
-        data = [self.x, self.y, self.over, self.held, self.opened, self.flagged, count, isMine]
-
-        return dataprocessor.getBytes(self.net_id, p_id, data)
-
-    def send_state(self):
-        # Sent on initial creation (c_getStateData is used for new clients)
-        self.packer.pack('setup', [self.x, self.y, self.over, self.held, self.opened, self.flagged, self.count, self.isMine])
-
-    def setup(self, data):
-        self.x = data[0]
-        self.y = data[1]
-        self.over = data[2]  # Number of players hovering over the block
-        self.held = data[3]  # Number of players holding mouse on the block
-        self.opened = data[4]
-        self.flagged = data[5]
-        self.count = data[6]  # Will always be 0 on clients unless opened
-        self.isMine = data[7]  # Will always be 0 on clients unless opened
-
-        #self.registerInput('addHover')
-        #self.registerInput('removeHover')
-        #self.registerInput('addHold')
-        #self.registerInput('removeHold')
-        #self.registerInput('open')
-        #self.registerInput('flag')
-
-        self.packer.registerPack('open', self.process_open_signal, [Pack.UCHAR, Pack.UCHAR])
-
-        # Create the GameObject
-        scene = bge.logic.getCurrentScene()
-        ob = scene.addObject('Block', self.mgr.owner)
-        ob.worldPosition = [self.x, self.y, 0.0]
-        #if rot is not None:
-        #    ob.worldOrientation = rot
-
-        self.ob = ob
-        ob['component'] = self
-
-        self.refresh()
-    """
-
+        
     def addHover(self):
         if self.opened or self.flagged:
             return
@@ -378,11 +285,6 @@ class Block(Component):
     def refresh(self):
         if self.opened:
             self.process_open_signal([self.count, self.isMine])
-            """
-            new = self.ob.scene.addObject('Uncovered', self.ob)
-            self.ob.endObject()
-            self.ob = new
-            """
             return
 
         if self.flagged:
