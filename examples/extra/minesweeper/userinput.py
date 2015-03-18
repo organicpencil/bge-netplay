@@ -26,10 +26,7 @@ class InputSystem:
 
         # References the component that receives input
         self.input_target = None
-
-        # Input is targeted at this block
-        self.currentBlock = None
-
+        
         # We'll be needing the cursor for our game
         bge.render.showMouse(1)
 
@@ -78,30 +75,3 @@ class InputSystem:
 
         if events[iDict['secondary']] == JUST_ACTIVATED:
             component.setInput('secondary_pressed', 1)
-        """
-        over = self.game.owner.sensors['over']
-        if over.positive:
-            other = over.hitObject
-            comp = other['component']
-
-            if self.currentBlock is not None and self.currentBlock is not comp:
-                self.currentBlock.setInput('hover', False)
-                self.currentBlock = None
-
-            if not comp.opened:
-                self.currentBlock = comp
-
-                comp.setInput('hover', True)
-                print ("hover")
-
-                if iDict['primary'] == ACTIVE:
-                    comp.setInput('open_hold', True)
-                else:
-                    comp.setInput('open_hold', False)
-
-                if iDict['primary'] == JUST_RELEASED:
-                    comp.setInput('open_release', True)
-
-                if iDict['secondary'] == JUST_ACTIVATED:
-                    comp.setInput('flag_press', True)
-        """
