@@ -207,7 +207,9 @@ class Server:
         bdata_list = cmgr.getQueuedData()
         for bdata_packer in bdata_list:
             for bdata in bdata_packer:
-                packet = self.network.createPacket(bdata)
+                reliable = bdata[0]
+                d = bdata[1]
+                packet = self.network.createPacket(d, reliable=reliable)
                 for c in self.client_list:
                     if c is not None:
                         self.network.send(c.peer, packet)
