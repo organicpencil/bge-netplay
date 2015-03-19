@@ -85,8 +85,6 @@ class Player(Component):
         self.current_block_id = net_id
 
     def c_update(self, dt):
-        Component.c_update(self, dt)
-
         if self.current_block_id == 0:
             return
 

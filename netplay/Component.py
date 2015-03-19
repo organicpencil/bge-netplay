@@ -220,6 +220,9 @@ class ServerComponentSystem:
                 break
 
             if c is not None:
+                if c.input_changed_:
+                    c._input_update()
+                    
                 c.c_update(dt)
                 c.c_server_update(dt)
 
@@ -533,28 +536,19 @@ class Component:
     def c_setup(self):
         return
 
-    def c_update(self, dt):
-        """
-        if self.input_changed_:
-            self.input_changed_ = False
-            if self.mgr.hostmode == 'client':
-                if self.mgr.game.systems['Input'].input_target is self:
-                    state = self.getPredictedInputState()
-                    self._packer.pack('input_', [state])
-
-            else:
-                state = self.getInputState()
-                self._packer.pack('input_', [state])
-        """
-        if self.input_changed_:
-            self.input_changed_ = False
-            if self.mgr.hostmode == 'client':
-                if self.mgr.game.systems['Input'].input_target is self:
-                    state = self.getInputState()
-                    self._packer.pack('_input', [state])
-            else:
+    def _input_update(self):
+        self.input_changed_ = False
+        if self.mgr.hostmode == 'client':
+            if self.mgr.game.systems['Input'].input_target is self:
                 state = self.getInputState()
                 self._packer.pack('_input', [state])
+        else:
+            state = self.getInputState()
+            self._packer.pack('_input', [state])
+
+    def c_update(self, dt):
+        return
+        
 
     def c_server_update(self, dt):
         return
