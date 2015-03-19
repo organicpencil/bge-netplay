@@ -2,9 +2,6 @@ import bge
 import bgui
 from bgui import bge_utils
 
-import os
-os.chdir(bge.logic.expandPath('//'))
-
 
 class Menu(bge_utils.System):
 
