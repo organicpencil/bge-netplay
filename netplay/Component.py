@@ -325,7 +325,7 @@ class Component:
 
         # Register the input update packer
         self.registerRPC('_input', self._process_input,
-            [Pack.UINT])
+            [Pack.UINT], ignoreOwner=True)
 
         # Register the permission packer
         self.registerRPC('_permission', self._process_permission,
@@ -384,8 +384,11 @@ class Component:
         self.c_setup()
         self._is_setup = True
 
-    def registerRPC(self, key, callback, datatypes, reliable=True):
-        self._packer.registerRPC(key, callback, datatypes, reliable)
+    def registerRPC(self, key, callback, datatypes,
+            reliable=True, ignoreOwner=False):
+            
+        self._packer.registerRPC(key, callback, datatypes,
+                reliable, ignoreOwner)
 
     def registerInput(self, input_name):
         # Run once per input key at component init

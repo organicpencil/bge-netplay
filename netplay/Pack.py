@@ -20,9 +20,10 @@ STRING_LENGTH_MAX = 255
 
 class DataProcessor:
 
-    def __init__(self, callback, datatypes, reliable):
+    def __init__(self, callback, datatypes, reliable, ignoreOwner):
         self.callback = callback
         self.reliable = reliable
+        self.ignoreOwner = ignoreOwner
 
         formatstring = '!'
         string_locations = []
@@ -139,8 +140,11 @@ class Packer:
 
         self.queued_data = []
 
-    def registerRPC(self, key, callback, datatypes, reliable=True):
-        dataprocessor = DataProcessor(callback, datatypes, reliable)
+    def registerRPC(self, key, callback, datatypes,
+            reliable=True, ignoreOwner=False):
+            
+        dataprocessor = DataProcessor(callback, datatypes,
+                reliable, ignoreOwner)
 
         existing = self.pack_index.get(key, None)
 
@@ -159,7 +163,10 @@ class Packer:
 
         # Will be pulled by the component manager
         qdata = dataprocessor.getBytes(self.component.net_id, p_id, data)
-        self.queued_data.append([dataprocessor.reliable, qdata])
+        self.queued_data.append([self.component,
+                                dataprocessor.reliable,
+                                dataprocessor.ignoreOwner,
+                                qdata])
 
     def process(self, p_id, bdata):
         # Component ID and pack ID already stripped
@@ -167,3 +174,4 @@ class Packer:
 
         # Acts on the component
         dataprocessor.callback(dataprocessor.getData(bdata))
+

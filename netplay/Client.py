@@ -76,7 +76,11 @@ class Client:
         bdata_list = cmgr.getQueuedData()
         for bdata_packer in bdata_list:
             for bdata in bdata_packer:
-                reliable = bdata[0]
-                d = bdata[1]
+                comp = bdata[0]
+                reliable = bdata[1]
+                ignoreOwner = bdata[2]
+                d = bdata[3]
+                
                 packet = self.network.createPacket(d, reliable=reliable)
                 self.network.send(self.serverPeer, packet)
+

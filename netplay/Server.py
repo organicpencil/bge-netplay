@@ -204,12 +204,18 @@ class Server:
         bdata_list = cmgr.getQueuedData()
         for bdata_packer in bdata_list:
             for bdata in bdata_packer:
-                reliable = bdata[0]
-                d = bdata[1]
+                comp = bdata[0]
+                reliable = bdata[1]
+                ignoreOwner = bdata[2]
+                d = bdata[3]
+                
                 packet = self.network.createPacket(d, reliable=reliable)
                 for c in self.client_list:
                     if c is not None:
-                        self.network.send(c.peer, packet)
+                        if not ignoreOwner:
+                            self.network.send(c.peer, packet)
+                        elif not comp.hasPermission(c.peer.incomingPeerID):
+                            self.network.send(c.peer, packet)
 
 
 class Client:
