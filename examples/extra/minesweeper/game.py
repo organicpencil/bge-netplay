@@ -125,7 +125,17 @@ class Game:
         p.givePermission(client_id)
 
     def Server_onDisconnect(self, client_id):
-        print ("FIXME - unhover/hold blocks and delete the player component")
+        # Find the player component that matches the client ID
+        c = self.systems['Component']
+        for comp in c.active_components_:
+            if comp is not None:
+                if comp.hasPermission(client_id):
+                    # Unhover / hold blocks
+                    comp.setBlock([0])
+                    
+                    # Delete the player component
+                    c.freeComponent(comp)
+                    return
 
     def update(self):
         # Determine delta time

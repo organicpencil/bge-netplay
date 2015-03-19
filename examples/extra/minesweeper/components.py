@@ -77,10 +77,11 @@ class Player(Component):
             self.current_block_id = 0
 
         net_id = data[0]
-        block = self.mgr.getComponent(net_id)
-        block.addHover()
-        if self.holding:
-            block.addHold()
+        if net_id != 0:
+            block = self.mgr.getComponent(net_id)
+            block.addHover()
+            if self.holding:
+                block.addHold()
 
         self.current_block_id = net_id
 
