@@ -120,11 +120,8 @@ class Server:
     def removeClient(self, peerID):
         # Assumes the peer was already reset (either by disconnect event
         # or a class to Client.disconnect()
-        client = self.client_list[peerID]
+        #client = self.client_list[peerID]
         self.client_list[peerID] = None
-
-        print ("FIXME - signal removal of client entities if applicable")
-        client
 
         self.onDisconnect(peerID)
 
@@ -225,3 +222,4 @@ class Client:
         # Forces disconnect, rather than waiting for timeout
         self.peer.reset()
         self.server.removeClient(self.peer.incomingPeerID)
+
