@@ -401,8 +401,14 @@ class Component:
         # The client version of registerInput
         self.input_dict[input_name] = input_index
         self.input_state[input_name] = False
-
-    def setInput(self, input_name, state, replicate=True):
+        
+    def resetInput(self, input_name):
+        state = 0
+        index = self.input_dict[input_name]
+        if self.input_mask[index] != state:
+            self.input_mask[index] = state
+        
+    def setInput(self, input_name, state):
         # Called when keys are pressed
         """
         if self.mgr.hostmode == 'server':

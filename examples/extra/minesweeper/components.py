@@ -93,17 +93,17 @@ class Player(Component):
         getInput = self.getInput
 
         if getInput('primary_pressed'):
-            self.setInput('primary_pressed', 0, False)
+            self.resetInput('primary_pressed')
             self.holding = True
             block.addHold()
 
         if getInput('primary_released'):
-            self.setInput('primary_released', 0, False)
+            self.resetInput('primary_released')
             self.holding = False
             block.open()
 
         if getInput('secondary_pressed'):
-            self.setInput('secondary_pressed', 0, False)
+            self.resetInput('secondary_pressed')
             block.flag()
 
 
