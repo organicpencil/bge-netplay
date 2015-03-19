@@ -384,8 +384,8 @@ class Component:
         self.c_setup()
         self._is_setup = True
 
-    def registerRPC(self, key, callback, datatypes):
-        self._packer.registerRPC(key, callback, datatypes)
+    def registerRPC(self, key, callback, datatypes, reliable=True):
+        self._packer.registerRPC(key, callback, datatypes, reliable)
 
     def registerInput(self, input_name):
         # Run once per input key at component init
