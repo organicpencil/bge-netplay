@@ -130,10 +130,7 @@ class Game:
         for comp in c.active_components_:
             if comp is not None:
                 if comp.hasPermission(client_id):
-                    # Unhover / hold blocks
-                    comp.setBlock([0])
-                    
-                    # Delete the player component
+                    # Destroy the player component
                     c.freeComponent(comp)
                     return
 

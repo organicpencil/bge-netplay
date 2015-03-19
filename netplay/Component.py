@@ -122,12 +122,18 @@ class ServerComponentSystem:
         return self.component_dict[comp_name]
 
     def freeComponent(self, comp):
+        net_id = comp.net_id
+
+        self.MainComponent._packer.pack('freeComponent',
+                [net_id])
+
         # Send backlogged data before freeing
         self.game.systems['Server'].sendQueuedData()
 
-        net_id = comp.net_id
         self.active_components_[net_id] = None
         self.freed_active_id_.append(net_id)
+
+        comp.c_destroy()
 
     def getComponent(self, net_id):
         return self.active_components_[net_id]
@@ -224,10 +230,10 @@ class ServerComponentSystem:
                     print ("Not setup?")
                     print (c)
                     continue
-                    
+
                 if c.input_changed_:
                     c._input_update()
-                    
+
                 c.c_update(dt)
                 c.c_server_update(dt)
 
@@ -257,6 +263,7 @@ class ClientComponentSystem(ServerComponentSystem):
     def freeComponent(self, comp):
         net_id = comp.net_id
         self.active_components_[net_id] = None
+        comp.c_destroy()
 
     def update(self, dt):
         i = 0
@@ -266,10 +273,10 @@ class ClientComponentSystem(ServerComponentSystem):
                 break
 
             if c is not None:
-                
+
                 if c.input_changed_:
                     c._input_update()
-                
+
                 c.c_update(dt)
 
             i += 1
@@ -281,7 +288,7 @@ class Component:
         self.mgr = mgr
         self.ob_ = None
         self.net_id = net_id
-        
+
         self._is_setup = False
 
         # List of clients (by ID) with permission to set input
@@ -343,10 +350,10 @@ class Component:
 
         # Rebuild attribute packer
         self.registerRPC('_attributes', self._process_attributes, datatype_list)
-        
+
     def setAttribute(self, key, value):
         self._attributes[key] = value
-        
+
     def getAttribute(self, key):
         return self._attributes[key]
 
@@ -386,7 +393,7 @@ class Component:
 
     def registerRPC(self, key, callback, datatypes,
             reliable=True, ignoreOwner=False):
-            
+
         self._packer.registerRPC(key, callback, datatypes,
                 reliable, ignoreOwner)
 
@@ -420,13 +427,13 @@ class Component:
         # The client version of registerInput
         self.input_dict[input_name] = input_index
         self.input_state[input_name] = False
-        
+
     def resetInput(self, input_name):
         state = 0
         index = self.input_dict[input_name]
         if self.input_mask[index] != state:
             self.input_mask[index] = state
-        
+
     def setInput(self, input_name, state):
         # Called when keys are pressed
         """
@@ -551,11 +558,14 @@ class Component:
 
     def c_register(self):
         return
-        
+
     def c_refresh_attributes(self):
         return
 
     def c_setup(self):
+        return
+
+    def c_destroy(self):
         return
 
     def _input_update(self):
@@ -570,7 +580,6 @@ class Component:
 
     def c_update(self, dt):
         return
-        
 
     def c_server_update(self, dt):
         return
@@ -587,9 +596,12 @@ class MainComponent(Component):
         self._packer.registerRPC('addComponent', self.addComponent,
             [Pack.USHORT, Pack.USHORT])
 
+        self._packer.registerRPC('freeComponent', self.freeComponent,
+            [Pack.USHORT])
+
         self._packer.registerRPC('setClientID', self.setClientID,
             [Pack.INT])
-            
+
         self._is_setup = True
 
     def addComponent(self, data):
@@ -601,6 +613,12 @@ class MainComponent(Component):
 
         self.mgr.spawnComponentByIndex(net_id, comp_index)
         #comp.setInputState(input_state)
+
+    def freeComponent(self, data):
+        net_id = data[0]
+
+        comp = self.mgr.active_components_[net_id]
+        self.mgr.freeComponent(comp)
 
     def setClientID(self, data):
         self.mgr.client_id = data[0]

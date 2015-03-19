@@ -50,7 +50,7 @@ class Player(Component):
         # You can accomplish the same with RPCs if desired.
         # In fact inputs are just an abstraction to this built-in RPC:
         #self.registerRPC('_input', self._process_input, [Pack.UINT])
-        
+
     def c_refresh_attributes(self):
         # Runs on server when new clients need information
         # Only need to update attributes that could have changed
@@ -65,6 +65,10 @@ class Player(Component):
 
         # True when mouse is held
         self.holding = False
+
+    def c_destroy(self):
+        # Unhover / hold blocks
+        self.setBlock([0])
 
     def setBlock(self, data):
         if self.current_block_id != 0:
@@ -121,7 +125,7 @@ class Block(Component):
 
         self.registerRPC('open', self.process_open_signal,
             [Pack.UCHAR, Pack.UCHAR])
-            
+
     def c_refresh_attributes(self):
         self.setAttribute('over', self.over)
         self.setAttribute('held', self.held)
@@ -152,7 +156,7 @@ class Block(Component):
         ob['component'] = self
 
         self.refresh()
-        
+
     def addHover(self):
         if self.opened or self.flagged:
             return
