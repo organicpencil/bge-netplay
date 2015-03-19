@@ -342,6 +342,9 @@ class Component:
         
     def setAttribute(self, key, value):
         self._attributes[key] = value
+        
+    def getAttribute(self, key):
+        return self._attributes[key]
 
     def _process_attributes(self, data):
         attrs = self._attribute_list
@@ -375,6 +378,7 @@ class Component:
         self._packer.pack('_attributes', data)
 
         self.c_setup()
+        self._is_setup = True
 
     def registerRPC(self, key, callback, datatypes):
         self._packer.registerRPC(key, callback, datatypes)
@@ -579,7 +583,7 @@ class MainComponent(Component):
         self._packer.registerRPC('setClientID', self.setClientID,
             [Pack.INT])
             
-        self._is_setup = False
+        self._is_setup = True
 
     def addComponent(self, data):
         net_id = data[0]
