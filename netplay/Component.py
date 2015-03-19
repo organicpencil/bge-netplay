@@ -266,6 +266,10 @@ class ClientComponentSystem(ServerComponentSystem):
                 break
 
             if c is not None:
+                
+                if c.input_changed_:
+                    c._input_update()
+                
                 c.c_update(dt)
 
             i += 1
@@ -597,3 +601,4 @@ class MainComponent(Component):
 
     def setClientID(self, data):
         self.mgr.client_id = data[0]
+
