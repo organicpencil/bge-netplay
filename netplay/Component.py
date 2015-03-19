@@ -429,10 +429,7 @@ class Component:
         index = self.input_dict[input_name]
         if self.input_mask[index] != state:
             self.input_mask[index] = state
-            # Save some bandwidth
-            # Replication isn't wanted when set on the component
-            if replicate:
-                self.input_changed_ = True
+            self.input_changed_ = True
 
     def getInput(self, input_name):
         #return self.input_state[input_name]
