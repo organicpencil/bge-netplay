@@ -220,6 +220,11 @@ class ServerComponentSystem:
                 break
 
             if c is not None:
+                if not c._is_setup:
+                    print ("Not setup?")
+                    print (c)
+                    continue
+                    
                 if c.input_changed_:
                     c._input_update()
                     
@@ -272,6 +277,8 @@ class Component:
         self.mgr = mgr
         self.ob_ = None
         self.net_id = net_id
+        
+        self._is_setup = False
 
         # List of clients (by ID) with permission to set input
         self.client_permission_list_ = []
@@ -346,6 +353,7 @@ class Component:
             i += 1
 
         self.c_setup()
+        self._is_setup = True
 
     def _get_attribute_data(self):
         p_id = self._packer.pack_index['_attributes']
@@ -570,6 +578,8 @@ class MainComponent(Component):
 
         self._packer.registerRPC('setClientID', self.setClientID,
             [Pack.INT])
+            
+        self._is_setup = False
 
     def addComponent(self, data):
         net_id = data[0]
