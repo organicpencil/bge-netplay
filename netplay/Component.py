@@ -246,7 +246,7 @@ class ClientComponentSystem(ServerComponentSystem):
             net_id)
         self.active_components_[net_id] = comp
 
-        if net_id > self.next_active_id_:
+        if net_id >= self.next_active_id_:
             self.next_active_id_ = net_id + 1
 
         return comp
