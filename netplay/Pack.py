@@ -1,5 +1,6 @@
 import struct
 
+BOOL = '?'
 CHAR = 'b'
 UCHAR = 'B'
 SHORT = 'h'
