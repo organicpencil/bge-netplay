@@ -1,10 +1,12 @@
 import unittest
 import enet
 import Pack
+import time
 
 class ComponentStub:
     def __init__(self):
         self.comp_id = 0
+        self.net_id = 1
 
 
 class TestEnet(unittest.TestCase):
@@ -20,14 +22,14 @@ class TestPack(unittest.TestCase):
         p = Pack.Packer(ComponentStub())
         
         # Register data processors
-        p.registerPack('test', None, [Pack.USHORT, Pack.USHORT, Pack.FLOAT, Pack.FLOAT])
+        p.registerRPC('test', None, [Pack.USHORT, Pack.USHORT, Pack.FLOAT, Pack.FLOAT])
         
         # Test consistency between data sent and received
         data = [0, 0, 1.0, 2.0]
         p.pack('test', data)
         
         processor = p.pack_list[p.pack_index['test']]
-        bdata = p.queued_data.pop()[4:]
+        bdata = p.queued_data.pop()[3][4:]
         newdata = processor.getData(bdata)
         
         self.assertEqual(data, newdata, "Packed data does not match")
@@ -38,14 +40,14 @@ class TestPack(unittest.TestCase):
         p = Pack.Packer(ComponentStub())
         
         # Register data processors
-        p.registerPack('test', None, [Pack.INT])
+        p.registerRPC('test', None, [Pack.INT])
         
         # Test consistency between data sent and received
         data = [-50]
         p.pack('test', data)
         
         processor = p.pack_list[p.pack_index['test']]
-        bdata = p.queued_data.pop()[4:]
+        bdata = p.queued_data.pop()[3][4:]
         newdata = processor.getData(bdata)
         
         self.assertEqual(data, newdata, "Packed data does not match")
@@ -56,14 +58,14 @@ class TestPack(unittest.TestCase):
         p = Pack.Packer(ComponentStub())
         
         # Register data processors
-        p.registerPack('test', None, [Pack.STRING])
+        p.registerRPC('test', None, [Pack.STRING])
         
         # Test consistency between data sent and received
         data = ["Blah"]
         p.pack('test', data)
         
         processor = p.pack_list[p.pack_index['test']]
-        bdata = p.queued_data.pop()[4:]
+        bdata = p.queued_data.pop()[3][4:]
         newdata = processor.getData(bdata)
         
         self.assertEqual(data, newdata, "Packed data does not match")
@@ -74,14 +76,14 @@ class TestPack(unittest.TestCase):
         p = Pack.Packer(ComponentStub())
         
         # Register data processors
-        p.registerPack('test', None, [Pack.STRING, Pack.STRING])
+        p.registerRPC('test', None, [Pack.STRING, Pack.STRING])
         
         # Test consistency between data sent and received
         data = ["First", "And second"]
         p.pack('test', data)
         
         processor = p.pack_list[p.pack_index['test']]
-        bdata = p.queued_data.pop()[4:]
+        bdata = p.queued_data.pop()[3][4:]
         newdata = processor.getData(bdata)
         
         self.assertEqual(data, newdata, "Packed data does not match")
@@ -92,14 +94,14 @@ class TestPack(unittest.TestCase):
         p = Pack.Packer(ComponentStub())
         
         # Register data processors
-        p.registerPack('test', None, [Pack.STRING, Pack.INT])
+        p.registerRPC('test', None, [Pack.STRING, Pack.INT])
         
         # Test consistency between data sent and received
         data = ["Blah", 9000]
         p.pack('test', data)
         
         processor = p.pack_list[p.pack_index['test']]
-        bdata = p.queued_data.pop()[4:]
+        bdata = p.queued_data.pop()[3][4:]
         newdata = processor.getData(bdata)
         
         self.assertEqual(data, newdata, "Packed data does not match")
@@ -110,14 +112,14 @@ class TestPack(unittest.TestCase):
         p = Pack.Packer(ComponentStub())
         
         # Register data processors
-        p.registerPack('test', None, [Pack.INT, Pack.STRING])
+        p.registerRPC('test', None, [Pack.INT, Pack.STRING])
         
         # Test consistency between data sent and received
         data = [9000, "Blah"]
         p.pack('test', data)
         
         processor = p.pack_list[p.pack_index['test']]
-        bdata = p.queued_data.pop()[4:]
+        bdata = p.queued_data.pop()[3][4:]
         newdata = processor.getData(bdata)
         
         self.assertEqual(data, newdata, "Packed data does not match")
@@ -128,7 +130,7 @@ class TestPack(unittest.TestCase):
         p = Pack.Packer(ComponentStub())
         
         # Register data processors
-        p.registerPack('test', None, [Pack.STRING])
+        p.registerRPC('test', None, [Pack.STRING])
         
         # Test consistency between data sent and received
         data = ["21111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111200000"]
@@ -137,7 +139,7 @@ class TestPack(unittest.TestCase):
         p.pack('test', data)
         
         processor = p.pack_list[p.pack_index['test']]
-        bdata = p.queued_data.pop()[4:]
+        bdata = p.queued_data.pop()[3][4:]
         newdata = processor.getData(bdata)
         
         self.assertEqual(expected_data, newdata, "Packed data does not match")
