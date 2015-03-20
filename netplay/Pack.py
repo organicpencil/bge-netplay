@@ -19,6 +19,39 @@ STRING_LENGTH_TYPE = UCHAR
 STRING_LENGTH_MAX = 255
 
 
+def fromDataList(dataList):
+    to_pack = []
+    formatstring = '!B'
+    for i in range(0, len(dataList)):
+        formatstring += 'B'
+        to_pack.append(len(dataList[i]))
+
+    bdata = struct.pack(formatstring, len(dataList), *to_pack)
+    for d in dataList:
+        bdata += d
+
+    return bdata
+
+
+def toDataList(bdata):
+    amount = struct.unpack('!B', bdata[:1])[0]
+    #data = bdata[amount+1:]
+
+    sizes = []
+    for i in range(1, amount + 1):
+        u = bdata[:i + 1][i:]
+        sizes.append(struct.unpack('!B', u)[0])
+
+    dataList = []
+    count = 0
+    for s in sizes:
+        d = bdata[:amount + 1 + s + count][amount + 1 + count:]
+        dataList.append(d)
+        count += s
+
+    return dataList
+
+
 class DataProcessor:
 
     def __init__(self, callback, datatypes, reliable, ignoreOwner):
