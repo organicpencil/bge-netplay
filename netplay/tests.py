@@ -1,7 +1,7 @@
 import unittest
 import enet
 import Pack
-import time
+
 
 class ComponentStub:
     def __init__(self):
@@ -22,7 +22,8 @@ class TestPack(unittest.TestCase):
         p = Pack.Packer(ComponentStub())
 
         # Register data processors
-        p.registerRPC('test', None, [Pack.USHORT, Pack.USHORT, Pack.FLOAT, Pack.FLOAT])
+        p.registerRPC('test', None,
+                [Pack.USHORT, Pack.USHORT, Pack.FLOAT, Pack.FLOAT])
 
         # Test consistency between data sent and received
         data = [0, 0, 1.0, 2.0]
@@ -125,7 +126,7 @@ class TestPack(unittest.TestCase):
         self.assertEqual(data, newdata, "Packed data does not match")
 
     def test_pack_string_truncated(self):
-        print ("Packing string that's too long assuming 255 limit (should be truncated)")
+        print ("Packing string that should be truncated")
         # Create the packer
         p = Pack.Packer(ComponentStub())
 
@@ -160,7 +161,6 @@ class TestPack(unittest.TestCase):
         p.pack('test', [15])
         p.pack('test2', [0.5])
 
-        #processor = p.pack_list[p.pack_index['test']]
         bdata_list = p.queued_data
 
         dataList = []
