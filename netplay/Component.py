@@ -33,6 +33,7 @@ class ServerComponentSystem:
         self.createMainComponent()
 
         component_subs = all_subclasses(Component)
+        component_subs.sort(key=lambda x: x.__name__, reverse=False)
         for cls in component_subs:
             if cls is MainComponent:
                 continue
@@ -243,6 +244,11 @@ class ClientComponentSystem(ServerComponentSystem):
                 break
 
             if c is not None:
+
+                if not c._is_setup:
+                    print ("Not setup?")
+                    print (c)
+                    continue
 
                 if c.input_changed_:
                     c._input_update()
