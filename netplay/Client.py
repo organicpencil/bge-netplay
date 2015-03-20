@@ -56,35 +56,34 @@ class Client:
                 self.onDisconnect()
 
             elif event.type == enet.EVENT_TYPE_RECEIVE:
-                bdata = event.packet.data
-                #bdata_list = Pack.toDataList(zlib.decompress(event.packet.data))
-                #for bdata in bdata_list:
-                # Get the component and processor IDs
-                header = struct.unpack('!HH', bdata[:4])
-                c_id = header[0]
-                p_id = header[1]
+                #bdata = event.packet.data
+                bdata_list = Pack.toDataList(event.packet.data)
+                for bdata in bdata_list:
+                    # Get the component and processor IDs
+                    header = struct.unpack('!HH', bdata[:4])
+                    c_id = header[0]
+                    p_id = header[1]
 
-                component = cmgr.getComponent(c_id)
-                if component is not None:
-                    # Strip the IDs and process
-                    data = bdata[4:]
-                    component._packer.process(p_id, data)
+                    component = cmgr.getComponent(c_id)
+                    if component is not None:
+                        # Strip the IDs and process
+                        data = bdata[4:]
+                        component._packer.process(p_id, data)
 
-                else:
-                    print (("Invalid component ID %d" % c_id))
+                    else:
+                        print (("Invalid component ID %d" % c_id))
 
         # Get queued data and ship to server
         bdata_list = cmgr.getQueuedData()
-        """
+        #"""
         reliable_data = []
         unreliable_data = []
 
         for bdata_packer in bdata_list:
             for bdata in bdata_packer:
-                #comp = bdata[0]
-                reliable = bdata[1]
-                #ignoreOwner = bdata[2]
-                d = bdata[3]
+                dp = bdata[0]
+                d = bdata[1]
+                reliable = dp.reliable
 
                 if reliable:
                     reliable_data.append(d)
@@ -110,4 +109,4 @@ class Client:
 
                 packet = self.network.createPacket(d, reliable=reliable)
                 self.network.send(self.serverPeer, packet)
-        #"""
+        """

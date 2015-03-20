@@ -111,7 +111,7 @@ class Server:
 
         # Just going to throw it at enet all at once and see what happens
         bdata_list = self.owner['Game'].systems['Component'].getGameState(peerID)
-        """
+        #"""
         d = Pack.fromDataList(bdata_list)
         packet = self.network.createPacket(d, reliable=True)
         self.network.send(self.peer, packet)
@@ -119,7 +119,7 @@ class Server:
         for bdata in bdata_list:
             packet = self.network.createPacket(bdata)
             self.network.send(self.peer, packet)
-        #"""
+        """
 
         self.onConnect(peerID)
 
@@ -170,36 +170,41 @@ class Server:
 
             elif event.type == enet.EVENT_TYPE_RECEIVE:
                 peerID = event.peer.incomingPeerID
-                bdata = event.packet.data
-                #bdata_list = Pack.toDataList(zlib.decompress(event.packet.data))
-                #for bdata in bdata_list:
-                # Get the component and processor IDs
-                header = struct.unpack('!HH', bdata[:4])
-                c_id = header[0]
-                p_id = header[1]
+                #bdata = event.packet.data
+                bdata_list = Pack.toDataList(event.packet.data)
+                for bdata in bdata_list:
+                    # Get the component and processor IDs
+                    header = struct.unpack('!HH', bdata[:4])
+                    c_id = header[0]
+                    p_id = header[1]
 
-                component = cmgr.getComponent(c_id)
-                if component is not None:
-                    if component.hasPermission(peerID):
-                        # Strip the IDs and process
-                        data = bdata[4:]
-                        dp = component._packer.process(p_id, data)
+                    component = cmgr.getComponent(c_id)
+                    if component is not None:
+                        if component.hasPermission(peerID):
+                            # Strip the IDs and process
+                            data = bdata[4:]
+                            dp = component._packer.process(p_id, data)
+                            reliable = dp.reliable
 
-                        if dp.replicate:
-                            # Forward the command to other clients
-                            k = 0
-                            for c in self.client_list:
-                                if c is not None and k != peerID:
-                                    self.network.send(c.peer, self.network.createPacket(bdata))
+                            if dp.replicate:
+                                # Forward the command to other clients
+                                k = 0
+                                for c in self.client_list:
+                                    if c is not None and k != peerID:
+                                        #self.network.send(c.peer, self.network.createPacket(bdata))
+                                        if reliable:
+                                            c.reliable_data.append(bdata)
+                                        else:
+                                            c.unreliable_data.append(bdata)
 
-                                k += 1
+                                    k += 1
+                        else:
+                            print ("Client does not have input permission")
+                            print (("This is normal if button was changed when",
+                                "the client still thought it was alive"))
+
                     else:
-                        print ("Client does not have input permission")
-                        print (("This is normal if button was changed when",
-                            "the client still thought it was alive"))
-
-                else:
-                    print (("Invalid component ID %d" % c_id))
+                        print (("Invalid component ID %d" % c_id))
 
         self.sendQueuedData()
 
@@ -210,28 +215,21 @@ class Server:
         # Get queued data and ship to clients
         cmgr = self.owner['Game'].systems['Component']
         bdata_list = cmgr.getQueuedData()
-        """
+        #"""
         # Ok... I'm going to create per-client packets
         # to reduce packet overhead at the cost of CPU time(?)
         for bdata_packer in bdata_list:
             for bdata in bdata_packer:
-                comp = bdata[0]
-                reliable = bdata[1]
-                ignoreOwner = bdata[2]
-                d = bdata[3]
+                dp = bdata[0]
+                d = bdata[1]
+                reliable = dp.reliable
 
                 for c in self.client_list:
                     if c is not None:
-                        if not ignoreOwner:
-                            if reliable:
-                                c.reliable_data.append(d)
-                            else:
-                                c.unreliable_data.append(d)
-                        elif not comp.hasPermission(c.peer.incomingPeerID):
-                            if reliable:
-                                c.reliable_data.append(d)
-                            else:
-                                c.unreliable_data.append(d)
+                        if reliable:
+                            c.reliable_data.append(d)
+                        else:
+                            c.unreliable_data.append(d)
 
         for c in self.client_list:
             if c is not None:
@@ -258,7 +256,7 @@ class Server:
                 for c in self.client_list:
                     if c is not None:
                         self.network.send(c.peer, packet)
-        #"""
+        """
 
 
 class Client:
