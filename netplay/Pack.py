@@ -21,9 +21,9 @@ STRING_LENGTH_MAX = 255
 
 def fromDataList(dataList):
     to_pack = []
-    formatstring = '!B'
+    formatstring = '!H'
     for i in range(0, len(dataList)):
-        formatstring += 'B'
+        formatstring += 'H'
         to_pack.append(len(dataList[i]))
 
     bdata = struct.pack(formatstring, len(dataList), *to_pack)
@@ -34,18 +34,21 @@ def fromDataList(dataList):
 
 
 def toDataList(bdata):
-    amount = struct.unpack('!B', bdata[:1])[0]
+    amount = struct.unpack('!H', bdata[:2])[0]
     #data = bdata[amount+1:]
 
+    headerdata = bdata[2:]
     sizes = []
-    for i in range(1, amount + 1):
-        u = bdata[:i + 1][i:]
-        sizes.append(struct.unpack('!B', u)[0])
+    i = 0
+    while i < amount * 2:
+        u = headerdata[:i + 2][i:]
+        sizes.append(struct.unpack('!H', u)[0])
+        i += 2
 
     dataList = []
     count = 0
 
-    userdata = bdata[amount + 1:]
+    userdata = headerdata[amount * 2:]
     count = 0
     for s in sizes:
         d = userdata[:s + count][count:]
