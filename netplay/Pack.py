@@ -57,10 +57,10 @@ def toDataList(bdata):
 
 class DataProcessor:
 
-    def __init__(self, callback, datatypes, reliable, ignoreOwner, replicate):
+    def __init__(self, component, callback, datatypes, reliable, replicate):
+        self.component = component
         self.callback = callback
         self.reliable = reliable
-        self.ignoreOwner = ignoreOwner
         self.replicate = replicate
 
         formatstring = '!'
@@ -83,7 +83,9 @@ class DataProcessor:
         self.formatstring = formatstring
         self.string_locations = string_locations
 
-    def getBytes(self, net_id, p_id, data):
+    def getBytes(self, p_id, data):
+        net_id = self.component.net_id
+
         header = struct.pack('!HH', net_id, p_id)
         if not len(self.string_locations):
             # Contains no strings
@@ -179,10 +181,10 @@ class Packer:
         self.queued_data = []
 
     def registerRPC(self, key, callback, datatypes,
-            reliable=True, ignoreOwner=False, replicate=True):
+            reliable=True, replicate=True):
 
-        dataprocessor = DataProcessor(callback, datatypes,
-                reliable, ignoreOwner, replicate)
+        dataprocessor = DataProcessor(self.component, callback, datatypes,
+                reliable, replicate)
 
         existing = self.pack_index.get(key, None)
 
@@ -200,10 +202,8 @@ class Packer:
         dataprocessor = self.pack_list[p_id]
 
         # Will be pulled by the component manager
-        qdata = dataprocessor.getBytes(self.component.net_id, p_id, data)
-        self.queued_data.append([self.component,
-                                dataprocessor.reliable,
-                                dataprocessor.ignoreOwner,
+        qdata = dataprocessor.getBytes(p_id, data)
+        self.queued_data.append([dataprocessor,
                                 qdata])
 
     def process(self, p_id, bdata):

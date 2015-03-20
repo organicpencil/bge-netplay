@@ -249,18 +249,15 @@ class Server:
         """
         for bdata_packer in bdata_list:
             for bdata in bdata_packer:
-                comp = bdata[0]
-                reliable = bdata[1]
-                ignoreOwner = bdata[2]
-                d = bdata[3]
+                dp = bdata[0]
+                d = bdata[1]
+                reliable = dp.reliable
+                comp = dp.component
 
                 packet = self.network.createPacket(d, reliable=reliable)
                 for c in self.client_list:
                     if c is not None:
-                        if not ignoreOwner:
-                            self.network.send(c.peer, packet)
-                        elif not comp.hasPermission(c.peer.incomingPeerID):
-                            self.network.send(c.peer, packet)
+                        self.network.send(c.peer, packet)
         #"""
 
 

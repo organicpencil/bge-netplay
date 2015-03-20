@@ -149,7 +149,7 @@ class ServerComponentSystem:
                 c_p_id = packer.pack_index['setClientID']
                 c_dataprocessor = packer.pack_list[c_p_id]
                 bdata_list.append(
-                    c_dataprocessor.getBytes(main_id, c_p_id, data))
+                    c_dataprocessor.getBytes(c_p_id, data))
 
             elif c is not None:
                 net_id = c.net_id
@@ -170,7 +170,7 @@ class ServerComponentSystem:
                 data = [net_id, comp_index]
 
                 bdata_list.append(
-                    dataprocessor.getBytes(main_id, p_id, data))
+                    dataprocessor.getBytes(p_id, data))
 
                 ## Need to send state before continuing
                 """
@@ -307,10 +307,8 @@ class Component:
         self.registerRPC('_attributes', self._process_attributes, [Pack.UINT])
 
         # Register the input update packer
-        #self.registerRPC('_input', self._process_input,
-        #    [Pack.UINT], ignoreOwner=True)
         self.registerRPC('_input', self._process_input,
-            [Pack.UCHAR], ignoreOwner=True)
+            [Pack.UCHAR])
 
         # Register the permission packer
         self.registerRPC('_permission', self._process_permission,
@@ -357,7 +355,7 @@ class Component:
         for k, d in attrs:
             data.append(self._attributes[k])
 
-        return dataprocessor.getBytes(self.net_id, p_id, data)
+        return dataprocessor.getBytes(p_id, data)
 
     def _send_attributes(self):
         data = []
@@ -370,10 +368,10 @@ class Component:
         self._is_setup = True
 
     def registerRPC(self, key, callback, datatypes,
-            reliable=True, ignoreOwner=False):
+            reliable=True):
 
         self._packer.registerRPC(key, callback, datatypes,
-                reliable, ignoreOwner)
+                reliable)
 
     def registerInput(self, input_name):
         # Run once per input key at component init
@@ -388,11 +386,11 @@ class Component:
 
             if index == 16:  # Need to allocate 2 bytes
                 self.registerRPC('_input', self._process_input,
-                    [Pack.USHORT], ignoreOwner=True)
+                    [Pack.USHORT])
 
             elif index == 8:  # Need to allocate 4 bytes
                 self.registerRPC('_input', self._process_input,
-                    [Pack.UINT], ignoreOwner=True)
+                    [Pack.UINT])
 
             return True
         else:

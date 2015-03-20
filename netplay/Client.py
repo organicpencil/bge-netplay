@@ -104,10 +104,9 @@ class Client:
         """
         for bdata_packer in bdata_list:
             for bdata in bdata_packer:
-                #comp = bdata[0]
-                reliable = bdata[1]
-                #ignoreOwner = bdata[2]
-                d = bdata[3]
+                dp = bdata[0]
+                d = bdata[1]
+                reliable = dp.reliable
 
                 packet = self.network.createPacket(d, reliable=reliable)
                 self.network.send(self.serverPeer, packet)
