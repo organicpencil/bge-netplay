@@ -29,6 +29,14 @@ def SPAWN_BLOCK(mgr, x, y):
     a['isMine'] = 0
     comp._send_attributes()
     return comp
+
+
+def SPAWN_TIMER(mgr):
+    comp = mgr.spawnComponent('Timer')
+    comp._attributes['time'] = 0.0
+    comp._attributes['stopped'] = 0
+    comp._send_attributes()
+    return comp
 ##
 
 
@@ -303,3 +311,36 @@ class Block(Component):
         if self.over:
             self.ob.replaceMesh('Block_hover')
             return
+
+
+class Timer(Component):
+    def c_register(self):
+        self.registerAttribute('time', Pack.FLOAT)
+        self.registerAttribute('stopped', Pack.UCHAR)
+
+        self.registerRPC('stop', self.onStop, [Pack.FLOAT])
+
+    def c_refresh_attributes(self):
+        self.setAttribute('time', self.time)
+        self.setAttribute('stopped', self.stopped)
+
+    def c_setup(self):
+        self.time = self.getAttribute('time')
+        self.stopped = self.getAttribute('stopped')
+
+        owner = self.mgr.owner
+        ob = owner.scene.addObject('Timer', owner)
+        ob.worldPosition = [-7.0, 11.0, 0.0]
+
+        self.ob = ob
+
+    def c_update(self, dt):
+        if not self.stopped:
+            self.time += dt
+            self.ob['Text'] = "%.0f" % self.time
+
+    def onStop(self, data):
+        # Sync with server stop time
+        self.time = data[0]
+        self.ob['Text'] = "%.0f" % self.time
+        self.stopped = 1

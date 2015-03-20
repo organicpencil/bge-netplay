@@ -51,6 +51,9 @@ class Game:
 
             self.generate()
 
+            # Add timer
+            components.SPAWN_TIMER(self.systems['Component'])
+
         else:
             self.systems['Client'] = netplay.Client(self, server_ip = owner['ip'])
             self.systems['Component'] = netplay.ClientComponentSystem(self)
