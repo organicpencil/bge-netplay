@@ -44,8 +44,11 @@ def toDataList(bdata):
 
     dataList = []
     count = 0
+
+    userdata = bdata[amount + 1:]
+    count = 0
     for s in sizes:
-        d = bdata[:amount + 1 + s + count][amount + 1 + count:]
+        d = userdata[:s + count][count:]
         dataList.append(d)
         count += s
 
