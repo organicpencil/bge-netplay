@@ -37,6 +37,8 @@ class Game:
 
         self.systems = {}
 
+        self.timer = None  # We'll store the game timer here
+
         ## Initialize core systems.  These will tic every frame
         if mode == netplay.MODE_SERVER or mode == netplay.MODE_OFFLINE:
             self.systems['Server'] = netplay.Server(self, mode=mode)
@@ -67,7 +69,7 @@ class Game:
             self.systems['Input'].setTarget(p)
 
         ## Used to determine frame time delta.
-        self.last_time = time.time()
+        self.last_time = time.monotonic()
 
         self.init = True
 
@@ -140,7 +142,7 @@ class Game:
 
     def update(self):
         # Determine delta time
-        now = time.time()
+        now = time.monotonic()
         dt = now - self.last_time
         self.last_time = now
 

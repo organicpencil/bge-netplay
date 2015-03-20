@@ -229,6 +229,7 @@ class Block(Component):
             if self.isMine:
                 text['Text'] = "X"
                 text.color = self.mgr.game.colors[0]
+                self.mgr.game.timer.stopped = 1
             elif self.count == 0:
                 text['Text'] = ""
                 text.color = self.mgr.game.colors[0]
@@ -316,7 +317,7 @@ class Block(Component):
 class Timer(Component):
     def c_register(self):
         self.registerAttribute('time', Pack.FLOAT)
-        self.registerAttribute('stopped', Pack.UCHAR)
+        self.registerAttribute('stopped', Pack.CHAR)
 
         self.registerRPC('stop', self.onStop, [Pack.FLOAT])
 
@@ -331,13 +332,22 @@ class Timer(Component):
         owner = self.mgr.owner
         ob = owner.scene.addObject('Timer', owner)
         ob.worldPosition = [-7.0, 11.0, 0.0]
+        ob['Text'] = "%.0f" % self.time
 
         self.ob = ob
+
+        self.mgr.game.timer = self
 
     def c_update(self, dt):
         if not self.stopped:
             self.time += dt
             self.ob['Text'] = "%.0f" % self.time
+
+    def c_server_update(self, dt):
+        if self.stopped == 1:
+            self.stopped = 2
+            # Sync stop time with clients
+            self._packer.pack('stop', [self.time])
 
     def onStop(self, data):
         # Sync with server stop time
