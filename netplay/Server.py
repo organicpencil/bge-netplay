@@ -7,7 +7,7 @@ import threading
 import json
 import time
 
-from . import constants
+from . import constants, Pack
 
 
 class ServerHeartbeatThread(threading.Thread):
@@ -111,9 +111,15 @@ class Server:
 
         # Just going to throw it at enet all at once and see what happens
         bdata_list = self.owner['Game'].systems['Component'].getGameState(peerID)
+        """
+        d = Pack.fromDataList(bdata_list)
+        packet = self.network.createPacket(d, reliable=True)
+        self.network.send(self.peer, packet)
+        """
         for bdata in bdata_list:
             packet = self.network.createPacket(bdata)
             self.network.send(self.peer, packet)
+        #"""
 
         self.onConnect(peerID)
 
@@ -165,7 +171,8 @@ class Server:
             elif event.type == enet.EVENT_TYPE_RECEIVE:
                 peerID = event.peer.incomingPeerID
                 bdata = event.packet.data
-
+                #bdata_list = Pack.toDataList(zlib.decompress(event.packet.data))
+                #for bdata in bdata_list:
                 # Get the component and processor IDs
                 header = struct.unpack('!HH', bdata[:4])
                 c_id = header[0]
@@ -202,13 +209,50 @@ class Server:
         # Get queued data and ship to clients
         cmgr = self.owner['Game'].systems['Component']
         bdata_list = cmgr.getQueuedData()
+        """
+        # Ok... I'm going to create per-client packets
+        # to reduce packet overhead at the cost of CPU time(?)
         for bdata_packer in bdata_list:
             for bdata in bdata_packer:
                 comp = bdata[0]
                 reliable = bdata[1]
                 ignoreOwner = bdata[2]
                 d = bdata[3]
-                
+
+                for c in self.client_list:
+                    if c is not None:
+                        if not ignoreOwner:
+                            if reliable:
+                                c.reliable_data.append(d)
+                            else:
+                                c.unreliable_data.append(d)
+                        elif not comp.hasPermission(c.peer.incomingPeerID):
+                            if reliable:
+                                c.reliable_data.append(d)
+                            else:
+                                c.unreliable_data.append(d)
+
+        for c in self.client_list:
+            if c is not None:
+                if len(c.reliable_data):
+                    d = Pack.fromDataList(c.reliable_data)
+                    c.reliable_data = []
+                    packet = self.network.createPacket(d, reliable=True)
+                    self.network.send(c.peer, packet)
+
+                if len(c.unreliable_data):
+                    d = Pack.fromDataList(c.unreliable_data)
+                    c.unreliable_data = []
+                    packet = self.network.createPacket(d, reliable=False)
+                    self.network.send(c.peer, packet)
+        """
+        for bdata_packer in bdata_list:
+            for bdata in bdata_packer:
+                comp = bdata[0]
+                reliable = bdata[1]
+                ignoreOwner = bdata[2]
+                d = bdata[3]
+
                 packet = self.network.createPacket(d, reliable=reliable)
                 for c in self.client_list:
                     if c is not None:
@@ -216,6 +260,7 @@ class Server:
                             self.network.send(c.peer, packet)
                         elif not comp.hasPermission(c.peer.incomingPeerID):
                             self.network.send(c.peer, packet)
+        #"""
 
 
 class Client:
@@ -223,6 +268,9 @@ class Client:
     def __init__(self, server, peer):
         self.server = server
         self.peer = peer
+
+        self.reliable_data = []
+        self.unreliable_data = []
 
     def disconnect(self):
         # Forces disconnect, rather than waiting for timeout
