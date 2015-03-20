@@ -34,6 +34,8 @@ class ServerComponentSystem:
 
         component_subs = all_subclasses(Component)
         for cls in component_subs:
+            if cls is MainComponent:
+                continue
             self.registerComponent(cls)
 
     def createMainComponent(self):
@@ -62,39 +64,7 @@ class ServerComponentSystem:
         else:
             return None
 
-    """
-    def spawnComponentByIndex(self, comp_index, pos, ori):
-        net_id = self.getNewID()
-        if net_id is not None:
-            comp = self.component_list[comp_index](self,
-                net_id, comp_index, pos, ori)
-            self.active_components_[net_id] = comp
-
-            ####### How should the client handle components?
-            # comp_index, net_id
-            # posx, posy, posz
-            # rotx, roty, rotz
-
-            self.MainComponent._packer.pack('addComponent',
-                    [net_id, comp_index,
-                    pos[0], pos[1], pos[2],
-                    ori[0], ori[1], ori[2],
-                    comp.getInputState()])
-
-            return comp
-        else:
-            print ("Component limit reached")
-            return None
-
-    def spawnComponent(self, comp_name, pos, ori):
-        # Spawns a component in the world by the user-defined index
-        # Wraps spawnComponentByIndex
-        comp_index = self.component_dict[comp_name]
-        return self.spawnComponentByIndex(comp_index, pos, ori)
-    """
-
     def spawnComponent(self, comp_index):
-
         if type(comp_index is str):
             comp_index = self.getComponentIndex(comp_index)
 
