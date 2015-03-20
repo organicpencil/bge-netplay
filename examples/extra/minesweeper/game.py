@@ -102,6 +102,7 @@ class Game:
 
             block = grid[rx][ry]
             block.isMine = True
+            used.append([rx, ry])
 
         # Calculate adjacent mines
         for x in range(0, SIZE_X):
