@@ -142,7 +142,7 @@ class Packer:
 
     def registerRPC(self, key, callback, datatypes,
             reliable=True, ignoreOwner=False):
-            
+
         dataprocessor = DataProcessor(callback, datatypes,
                 reliable, ignoreOwner)
 
@@ -174,4 +174,3 @@ class Packer:
 
         # Acts on the component
         dataprocessor.callback(dataprocessor.getData(bdata))
-
