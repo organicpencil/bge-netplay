@@ -30,7 +30,7 @@ class TestPack(unittest.TestCase):
         p.pack('test', data)
 
         processor = p.pack_list[p.pack_index['test']]
-        bdata = p.queued_data.pop()[3][4:]
+        bdata = p.queued_data.pop()[1][4:]
         newdata = processor.getData(bdata)
 
         self.assertEqual(data, newdata, "Packed data does not match")
@@ -48,7 +48,7 @@ class TestPack(unittest.TestCase):
         p.pack('test', data)
 
         processor = p.pack_list[p.pack_index['test']]
-        bdata = p.queued_data.pop()[3][4:]
+        bdata = p.queued_data.pop()[1][4:]
         newdata = processor.getData(bdata)
 
         self.assertEqual(data, newdata, "Packed data does not match")
@@ -66,7 +66,7 @@ class TestPack(unittest.TestCase):
         p.pack('test', data)
 
         processor = p.pack_list[p.pack_index['test']]
-        bdata = p.queued_data.pop()[3][4:]
+        bdata = p.queued_data.pop()[1][4:]
         newdata = processor.getData(bdata)
 
         self.assertEqual(data, newdata, "Packed data does not match")
@@ -84,7 +84,7 @@ class TestPack(unittest.TestCase):
         p.pack('test', data)
 
         processor = p.pack_list[p.pack_index['test']]
-        bdata = p.queued_data.pop()[3][4:]
+        bdata = p.queued_data.pop()[1][4:]
         newdata = processor.getData(bdata)
 
         self.assertEqual(data, newdata, "Packed data does not match")
@@ -102,7 +102,7 @@ class TestPack(unittest.TestCase):
         p.pack('test', data)
 
         processor = p.pack_list[p.pack_index['test']]
-        bdata = p.queued_data.pop()[3][4:]
+        bdata = p.queued_data.pop()[1][4:]
         newdata = processor.getData(bdata)
 
         self.assertEqual(data, newdata, "Packed data does not match")
@@ -120,7 +120,7 @@ class TestPack(unittest.TestCase):
         p.pack('test', data)
 
         processor = p.pack_list[p.pack_index['test']]
-        bdata = p.queued_data.pop()[3][4:]
+        bdata = p.queued_data.pop()[1][4:]
         newdata = processor.getData(bdata)
 
         self.assertEqual(data, newdata, "Packed data does not match")
@@ -140,7 +140,7 @@ class TestPack(unittest.TestCase):
         p.pack('test', data)
 
         processor = p.pack_list[p.pack_index['test']]
-        bdata = p.queued_data.pop()[3][4:]
+        bdata = p.queued_data.pop()[1][4:]
         newdata = processor.getData(bdata)
 
         self.assertEqual(expected_data, newdata, "Packed data does not match")
@@ -165,7 +165,7 @@ class TestPack(unittest.TestCase):
 
         dataList = []
         for bdata in bdata_list:
-            dataList.append(bdata[3])
+            dataList.append(bdata[1])
 
         d = Pack.fromDataList(dataList)
         newDataList = Pack.toDataList(d)
