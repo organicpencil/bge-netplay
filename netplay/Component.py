@@ -301,7 +301,7 @@ class Component:
         self.input_dict = {}
 
         # Consumed as inputs are registered, valid < 32
-        self.next_input_index_ = 0
+        self.next_input_index_ = 31
 
         # Current input state
         #self.input_state = {}
@@ -331,8 +331,10 @@ class Component:
         self.registerRPC('_attributes', self._process_attributes, [Pack.UINT])
 
         # Register the input update packer
+        #self.registerRPC('_input', self._process_input,
+        #    [Pack.UINT], ignoreOwner=True)
         self.registerRPC('_input', self._process_input,
-            [Pack.UINT], ignoreOwner=True)
+            [Pack.UCHAR], ignoreOwner=True)
 
         # Register the permission packer
         self.registerRPC('_permission', self._process_permission,
@@ -399,25 +401,23 @@ class Component:
 
     def registerInput(self, input_name):
         # Run once per input key at component init
-        # The idea is that we can compress the state
-        #     of ~30 predefined keys into a single integer
-        """
-        if self.next_input_index_ < 2147483647:
-            self.input_dict[input_name] = self.next_input_index_
-            self.input_state[input_name] = False
-            self.predicted_input_state[input_name] = False
-            self.next_input_index_ *= 2
-            return True
-        else:
-            print ("Input limit reached")
-            return False
-        """
-        if self.next_input_index_ < 32:
+        # Creates a bitmask for the input state, allowing 32 keys and
+        # consuming 1 to 4 bytes per update.
+        if self.next_input_index_ > 0:
             index = self.next_input_index_
             self.input_dict[input_name] = index
             self.input_mask[index] = 0
 
-            self.next_input_index_ += 1
+            self.next_input_index_ -= 1
+
+            if index == 16:  # Need to allocate 2 bytes
+                self.registerRPC('_input', self._process_input,
+                    [Pack.USHORT], ignoreOwner=True)
+
+            elif index == 8:  # Need to allocate 4 bytes
+                self.registerRPC('_input', self._process_input,
+                    [Pack.UINT], ignoreOwner=True)
+
             return True
         else:
             print ("Input limit reached")
@@ -436,17 +436,6 @@ class Component:
 
     def setInput(self, input_name, state):
         # Called when keys are pressed
-        """
-        if self.mgr.hostmode == 'server':
-            if self.input_state[input_name] != state:
-                self.input_state[input_name] = state
-                self.input_changed_ = True
-
-        else:
-            if self.predicted_input_state[input_name] != state:
-                self.predicted_input_state[input_name] = state
-                self.input_changed_ = True
-        """
         if state:
             state = 1
         else:
@@ -463,47 +452,11 @@ class Component:
         return self.input_mask[index]
 
     def setInputState(self, input_state):
-        """
-        self.input_changed_ = True
-
-        keyList = []
-        while input_state > 0:
-            lastBase = 1
-            base = 1
-            while input_state > base:
-                lastBase = base
-                base *= 2
-
-            input_state -= lastBase
-            keyList.append(lastBase)
-
-        for input_name, value in list(self.input_dict.items()):
-            if value == 1:
-                # 1 is reserved
-                continue
-
-            if value in keyList:
-                self.input_state[input_name] = True
-            else:
-                self.input_state[input_name] = False
-        """
-
         mask = bin(input_state)[2:].zfill(32)
         for i in range(0, len(mask)):
             self.input_mask[i] = int(mask[i])
 
     def getInputState(self):
-        """
-        #state = 0
-        # Input ID 1 is reserved to make it work
-        state = 1
-        for input_name, value in list(self.input_dict.items()):
-            if self.input_state[input_name]:
-                state += value
-
-        return state
-        """
-
         return int(''.join(map(str, self.input_mask)), 2)
 
     def getPredictedInputState(self):
@@ -622,4 +575,3 @@ class MainComponent(Component):
 
     def setClientID(self, data):
         self.mgr.client_id = data[0]
-
