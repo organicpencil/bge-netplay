@@ -57,10 +57,11 @@ def toDataList(bdata):
 
 class DataProcessor:
 
-    def __init__(self, callback, datatypes, reliable, ignoreOwner):
+    def __init__(self, callback, datatypes, reliable, ignoreOwner, replicate):
         self.callback = callback
         self.reliable = reliable
         self.ignoreOwner = ignoreOwner
+        self.replicate = replicate
 
         formatstring = '!'
         string_locations = []
@@ -178,10 +179,10 @@ class Packer:
         self.queued_data = []
 
     def registerRPC(self, key, callback, datatypes,
-            reliable=True, ignoreOwner=False):
+            reliable=True, ignoreOwner=False, replicate=True):
 
         dataprocessor = DataProcessor(callback, datatypes,
-                reliable, ignoreOwner)
+                reliable, ignoreOwner, replicate)
 
         existing = self.pack_index.get(key, None)
 
@@ -211,3 +212,5 @@ class Packer:
 
         # Acts on the component
         dataprocessor.callback(dataprocessor.getData(bdata))
+
+        return dataprocessor

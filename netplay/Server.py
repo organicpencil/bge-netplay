@@ -183,15 +183,16 @@ class Server:
                     if component.hasPermission(peerID):
                         # Strip the IDs and process
                         data = bdata[4:]
-                        component._packer.process(p_id, data)
+                        dp = component._packer.process(p_id, data)
 
-                        # Forward the command to other clients
-                        k = 0
-                        for c in self.client_list:
-                            if c is not None and k != peerID:
-                                self.network.send(c.peer, self.network.createPacket(bdata))
+                        if dp.replicate:
+                            # Forward the command to other clients
+                            k = 0
+                            for c in self.client_list:
+                                if c is not None and k != peerID:
+                                    self.network.send(c.peer, self.network.createPacket(bdata))
 
-                            k += 1
+                                k += 1
                     else:
                         print ("Client does not have input permission")
                         print (("This is normal if button was changed when",
