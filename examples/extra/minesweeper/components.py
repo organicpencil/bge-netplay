@@ -99,6 +99,9 @@ class Player(Component):
 
     def c_update(self, dt):
         if self.current_block_id == 0:
+            self.resetInput('primary_pressed')
+            self.resetInput('primary_released')
+            self.resetInput('secondary_pressed')
             return
 
         block = self.mgr.getComponent(self.current_block_id)
@@ -165,6 +168,9 @@ class Block(Component):
 
         self.refresh()
 
+    def c_destroy(self):
+        self.ob.endObject()
+
     def addHover(self):
         if self.opened or self.flagged:
             return
@@ -218,6 +224,10 @@ class Block(Component):
         if not self.held:
             return
 
+        timer = self.mgr.game.timer
+        if timer.stopped:
+            return
+
         self.opened = 1
 
         if self.mgr.hostmode == 'server':
@@ -229,15 +239,27 @@ class Block(Component):
             if self.isMine:
                 text['Text'] = "X"
                 text.color = self.mgr.game.colors[0]
-                self.mgr.game.timer.stopped = 1
+
+                # Stop from loss (1)
+                timer.onStop([timer.time, 1])
+                # Sync stop time and reason with clients
+                timer._packer.pack('stop', [timer.time, timer.stopped])
             elif self.count == 0:
                 text['Text'] = ""
                 text.color = self.mgr.game.colors[0]
+                self.mgr.game.blocks_remaining -= 1
             else:
                 text['Text'] = str(self.count)
                 text.color = self.mgr.game.colors[self.count]
+                self.mgr.game.blocks_remaining -= 1
 
             self._packer.pack('open', [self.count, self.isMine])
+
+            if self.mgr.game.blocks_remaining == 0:
+                # Stop from win (2)
+                timer.onStop([timer.time, 2])
+                # Sync stop time and reason with clients
+                timer._packer.pack('stop', [timer.time, timer.stopped])
 
             # And recursively open adjacent blocks if count = 0
             if self.count == 0:
@@ -319,38 +341,40 @@ class Timer(Component):
         self.registerAttribute('time', Pack.FLOAT)
         self.registerAttribute('stopped', Pack.CHAR)
 
-        self.registerRPC('stop', self.onStop, [Pack.FLOAT])
+        self.registerRPC('stop', self.onStop, [Pack.FLOAT, Pack.CHAR])
 
     def c_refresh_attributes(self):
         self.setAttribute('time', self.time)
         self.setAttribute('stopped', self.stopped)
 
     def c_setup(self):
-        self.time = self.getAttribute('time')
-        self.stopped = self.getAttribute('stopped')
-
         owner = self.mgr.owner
         ob = owner.scene.addObject('Timer', owner)
         ob.worldPosition = [-7.0, 11.0, 0.0]
-        ob['Text'] = "%.0f" % self.time
-
         self.ob = ob
-
         self.mgr.game.timer = self
+
+        self.onStop([self.getAttribute('time'), self.getAttribute('stopped')])
+
+    def c_destroy(self):
+        self.ob.endObject()
 
     def c_update(self, dt):
         if not self.stopped:
             self.time += dt
             self.ob['Text'] = "%.0f" % self.time
 
-    def c_server_update(self, dt):
-        if self.stopped == 1:
-            self.stopped = 2
-            # Sync stop time with clients
-            self._packer.pack('stop', [self.time])
-
     def onStop(self, data):
         # Sync with server stop time
         self.time = data[0]
+        self.stopped = data[1]
         self.ob['Text'] = "%.0f" % self.time
-        self.stopped = 1
+
+        if self.stopped == 1:
+            # Loss
+            self.ob['Text'] += " - Defeated"
+
+        if self.stopped == 2:
+            # Win
+            self.ob['Text'] += " - Victory"
+

@@ -26,7 +26,7 @@ class InputSystem:
 
         # References the component that receives input
         self.input_target = None
-        
+
         # We'll be needing the cursor for our game
         bge.render.showMouse(1)
 
@@ -62,11 +62,15 @@ class InputSystem:
         over = self.game.owner.sensors['over']
         if over.positive:
             other = over.hitObject
-            comp = other['component']
+            if other['block'] != -1:
+                comp = other['component']
 
-            if component.current_block_id == 0 or component.current_block_id != comp.net_id:
-                component.setBlock([comp.net_id])
-                component._packer.pack('set_current_block', [comp.net_id])
+                if component.current_block_id == 0 or component.current_block_id != comp.net_id:
+                    component.setBlock([comp.net_id])
+                    component._packer.pack('set_current_block', [comp.net_id])
+            else:
+                component.setBlock([0])
+                component._packer.pack('set_current_block', [0])
 
         if events[iDict['primary']] == JUST_ACTIVATED:
             component.setInput('primary_pressed', 1)

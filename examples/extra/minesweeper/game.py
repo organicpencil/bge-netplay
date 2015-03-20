@@ -48,13 +48,8 @@ class Game:
             serversystem.onConnect = self.Server_onConnect
             serversystem.onDisconnect = self.Server_onDisconnect
 
-            # Spawn blocks
-            self.grid = []
-
+            # Spawn blocks and add timer
             self.generate()
-
-            # Add timer
-            components.SPAWN_TIMER(self.systems['Component'])
 
         else:
             self.systems['Client'] = netplay.Client(self, server_ip = owner['ip'])
@@ -73,7 +68,32 @@ class Game:
 
         self.init = True
 
+    def reset(self):
+        # Yellow button pressed!!!
+        print ("Resetting board")
+
+        c = self.systems['Component']
+        for comp in c.active_components_:
+            if comp is not None:
+                if type(comp) is components.Player:
+                    comp._attributes['current_block_id'] = 0
+                    comp._send_attributes()
+
+                elif type(comp) is components.Block:
+                    c.freeComponent(comp)
+                    continue
+
+                elif type(comp) is components.Timer:
+                    c.freeComponent(comp)
+
+                else:
+                    # Unspecified component, likely the MainComponent
+                    continue
+
+        self.generate()
+
     def generate(self):
+        self.grid = []
         grid = self.grid
         c = self.systems['Component']
 
@@ -124,6 +144,13 @@ class Game:
                                 if other.isMine:
                                     block.count += 1
 
+        # Calculate blocks remaining to be uncovered for win
+        self.blocks_remaining = (SIZE_X * SIZE_Y) - MINES
+
+        # Add timer
+        components.SPAWN_TIMER(self.systems['Component'])
+
+
     def Server_onConnect(self, client_id):
         # Spawn a player component and give input permission
         c = self.systems['Component']
@@ -149,6 +176,15 @@ class Game:
         # Update the systems
         for system in list(self.systems.values()):
             system.update(dt)
+
+
+def resetButton(cont):
+    if cont.sensors['click'].positive and cont.sensors['over'].positive:
+        owner = cont.owner
+        game = owner.get('Game', None)
+        if game is not None:
+            if game.systems['Component'].hostmode == 'server':
+                game.reset()
 
 
 def main(cont):
