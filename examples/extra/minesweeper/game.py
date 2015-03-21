@@ -17,18 +17,6 @@ class Game:
     def __init__(self, owner, mode=netplay.MODE_OFFLINE):
         self.owner = owner
 
-        self.colors = [
-            [0.0, 0.0, 0.0, 1.0],
-            [0.0, 0.0, 1.0, 1.0],
-            [0.0, 1.0, 0.0, 1.0],
-            [1.0, 0.0, 0.0, 1.0],
-            [0.0, 0.0, 0.5, 1.0],
-            [0.5, 0.0, 0.0, 1.0],
-            [0.5, 0.5, 1.0, 1.0],
-            [0.0, 0.0, 0.0, 1.0],
-            [0.0, 0.0, 0.0, 1.0],
-        ]
-
         ## TODO - load from disk
         self.config = {}
         self.config['master'] = {}
@@ -39,6 +27,8 @@ class Game:
 
         self.timer = None  # We'll store the game timer here
 
+        self.board = None  # We'll store the game board here
+
         ## Initialize core systems.  These will tic every frame
         if mode == netplay.MODE_SERVER or mode == netplay.MODE_OFFLINE:
             self.systems['Server'] = netplay.Server(self, mode=mode)
@@ -48,9 +38,12 @@ class Game:
             serversystem.onConnect = self.Server_onConnect
             serversystem.onDisconnect = self.Server_onDisconnect
 
+            """
             # Spawn blocks and add timer
             self.generate()
-
+            """
+            components.SPAWN_BOARD(self.systems['Component'],
+                    SIZE_X, SIZE_Y, MINES)
         else:
             self.systems['Client'] = netplay.Client(self, server_ip = owner['ip'])
             self.systems['Component'] = netplay.ClientComponentSystem(self)
@@ -68,6 +61,7 @@ class Game:
 
         self.init = True
 
+    """
     def reset(self):
         # Yellow button pressed!!!
         print ("Resetting board")
@@ -91,7 +85,8 @@ class Game:
                     continue
 
         self.generate()
-
+    """
+    """
     def generate(self):
         self.grid = []
         grid = self.grid
@@ -127,6 +122,7 @@ class Game:
 
             block = grid[rx][ry]
             block.isMine = True
+            block._attributes['isMine'] = True
             used.append([rx, ry])
 
         # Calculate adjacent mines
@@ -143,12 +139,14 @@ class Game:
                                 other = grid[xi][yi]
                                 if other.isMine:
                                     block.count += 1
+                                    block._attributes['count'] += 1
 
         # Calculate blocks remaining to be uncovered for win
         self.blocks_remaining = (SIZE_X * SIZE_Y) - MINES
 
         # Add timer
         components.SPAWN_TIMER(self.systems['Component'])
+    """
 
 
     def Server_onConnect(self, client_id):

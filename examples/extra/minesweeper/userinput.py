@@ -58,19 +58,24 @@ class InputSystem:
         # We only need KX_INPUT_ACTIVE for our needs
         JUST_ACTIVATED = bge.logic.KX_INPUT_JUST_ACTIVATED
         JUST_RELEASED = bge.logic.KX_INPUT_JUST_RELEASED
-        ACTIVE = bge.logic.KX_INPUT_ACTIVE
+        #ACTIVE = bge.logic.KX_INPUT_ACTIVE
         over = self.game.owner.sensors['over']
         if over.positive:
             other = over.hitObject
             if other['block'] != -1:
-                comp = other['component']
+                block = other['BLOCK']
 
-                if component.current_block_id == 0 or component.current_block_id != comp.net_id:
-                    component.setBlock([comp.net_id])
-                    component._packer.pack('set_current_block', [comp.net_id])
-            else:
-                component.setBlock([0])
-                component._packer.pack('set_current_block', [0])
+                coords = [block.x, block.y]
+                if component.current_block != coords:
+                    component.setBlock(coords)
+                    component._packer.pack('set_current_block', coords)
+
+                #if component.current_block_id == 0 or component.current_block_id != comp.net_id:
+                #    component.setBlock([block.x, block.y])
+                #    component._packer.pack('set_current_block', [block.x, block.y])
+            #else:
+            #    component.setBlock([0])
+            #    component._packer.pack('set_current_block', [0])
 
         if events[iDict['primary']] == JUST_ACTIVATED:
             component.setInput('primary_pressed', 1)
