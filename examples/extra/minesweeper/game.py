@@ -45,7 +45,8 @@ class Game:
             components.SPAWN_BOARD(self.systems['Component'],
                     SIZE_X, SIZE_Y, MINES)
         else:
-            self.systems['Client'] = netplay.Client(self, server_ip = owner['ip'])
+            self.systems['Client'] = netplay.Client(self,
+                    server_ip=owner['ip'])
             self.systems['Component'] = netplay.ClientComponentSystem(self)
 
         self.systems['Input'] = InputSystem(self)
@@ -60,6 +61,21 @@ class Game:
         self.last_time = time.monotonic()
 
         self.init = True
+
+    def reset(self):
+        # Yellow button pressed on server
+        print ("Resetting board")
+
+        c = self.systems['Component']
+        for comp in c.active_components_:
+            if comp is not None:
+                if type(comp) is components.Player:
+                    comp.setAttribute('current_block_x', 0)
+                    comp.setAttribute('current_block_y', 0)
+
+        c.freeComponent(self.board)
+        self.board = None
+        components.SPAWN_BOARD(c, SIZE_X, SIZE_Y, MINES)
 
     """
     def reset(self):

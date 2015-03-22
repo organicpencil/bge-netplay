@@ -125,6 +125,10 @@ class Player(Component):
         x = self.current_block[0]
         y = self.current_block[1]
         board = self.mgr.game.board
+        if len(board.grid) == 0:
+            # Board not yet initialized
+            return
+
         block = board.grid[x][y]
 
         getInput = self.getInput
@@ -412,7 +416,7 @@ class Board(Component):
     def c_destroy(self):
         for col in self.grid:
             for block in col:
-                col.destroy()
+                block.destroy()
 
         self.grid = []
 
