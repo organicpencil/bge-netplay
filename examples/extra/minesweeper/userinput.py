@@ -50,6 +50,10 @@ class InputSystem:
         if self.locked:
             return
 
+        timer = self.game.timer
+        if timer.stopped:
+            return
+
         iDict = self.inputDict
         events = bge.logic.mouse.events
 
@@ -67,6 +71,10 @@ class InputSystem:
                 if component.current_block != coords:
                     component.setBlock(coords)
                     component._packer.pack('set_current_block', coords)
+            else:
+                return
+        else:
+            return
 
         if events[iDict['primary']] == JUST_ACTIVATED:
             component.setInput('primary_pressed', 1)

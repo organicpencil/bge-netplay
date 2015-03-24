@@ -105,10 +105,6 @@ class Player(Component):
             # Board not yet initialized
             return
 
-        timer = self.mgr.game.timer
-        if timer.stopped:
-            return
-
         block = board.grid[x][y]
 
         getInput = self.getInput
