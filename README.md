@@ -11,10 +11,7 @@ What it does:
 What it doesn't do:
 - Automatic multiplayer.  The developer must have basic programming knowledge to use this library.
 - Provide common functions like chat, physics, and movement.  You can find such things in the examples.
-- Work on MacOS (yet)
-
-#Features
-Write me!
+- Work on MacOS or Windows64 (yet)
 
 
 
