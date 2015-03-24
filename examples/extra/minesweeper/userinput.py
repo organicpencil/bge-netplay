@@ -51,8 +51,6 @@ class InputSystem:
             return
 
         iDict = self.inputDict
-        #events = collections.ChainMap(bge.logic.keyboard.events,
-        #    bge.logic.mouse.events)
         events = bge.logic.mouse.events
 
         # We only need KX_INPUT_ACTIVE for our needs
@@ -69,13 +67,6 @@ class InputSystem:
                 if component.current_block != coords:
                     component.setBlock(coords)
                     component._packer.pack('set_current_block', coords)
-
-                #if component.current_block_id == 0 or component.current_block_id != comp.net_id:
-                #    component.setBlock([block.x, block.y])
-                #    component._packer.pack('set_current_block', [block.x, block.y])
-            #else:
-            #    component.setBlock([0])
-            #    component._packer.pack('set_current_block', [0])
 
         if events[iDict['primary']] == JUST_ACTIVATED:
             component.setInput('primary_pressed', 1)
