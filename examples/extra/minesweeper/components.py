@@ -23,6 +23,13 @@ def SPAWN_BOARD(mgr, x, y, mines):
     return comp
 
 
+def SPAWN_TIMER(mgr):
+    comp = mgr.spawnComponent('Timer')
+    comp._attributes['time'] = 0.0
+    comp._attributes['stopped'] = 0
+    comp._send_attributes()
+    return comp
+
 """
 def SPAWN_BLOCK(mgr, x, y):
     comp = mgr.spawnComponent('Block')
@@ -39,12 +46,7 @@ def SPAWN_BLOCK(mgr, x, y):
     return comp
 
 
-def SPAWN_TIMER(mgr):
-    comp = mgr.spawnComponent('Timer')
-    comp._attributes['time'] = 0.0
-    comp._attributes['stopped'] = 0
-    comp._send_attributes()
-    return comp
+
 """
 ##
 
@@ -91,7 +93,7 @@ class Player(Component):
 
     def c_destroy(self):
         # Unhover / hold blocks
-        self.setBlock([0])
+        self.setBlock([0, 0])
 
     def setBlock(self, data):
         x = data[0]
@@ -127,6 +129,10 @@ class Player(Component):
         board = self.mgr.game.board
         if len(board.grid) == 0:
             # Board not yet initialized
+            return
+
+        timer = self.mgr.game.timer
+        if timer.stopped:
             return
 
         block = board.grid[x][y]
@@ -397,6 +403,26 @@ class Board(Component):
         block.reveal()
         block.isOpen = True
 
+        if block.isMine:
+            timer = self.mgr.game.timer
+            timer.onStop([timer.time, 1])
+            # Sync time with clients
+            if self.mgr.hostmode == 'server':
+                timer._packer.pack('stop', [timer.time, timer.stopped])
+
+            return
+
+        else:
+            self.blocks_remaining -= 1
+            if self.blocks_remaining == 0:
+                timer = self.mgr.game.timer
+                timer.onStop([timer.time, 2])
+                # Sync time with clients
+                if self.mgr.hostmode == 'server':
+                    timer._packer.pack('stop', [timer.time, timer.stopped])
+
+                return
+
         # Recursively open adjacent blocks while adjacent is 0
         if block.adjacent == 0:
             for dx in range(-1, 2):
@@ -634,6 +660,7 @@ class Block(Component):
             self.ob.replaceMesh('Block_hover')
             return
 """
+
 
 class Timer(Component):
     def c_register(self):

@@ -44,6 +44,8 @@ class Game:
             """
             components.SPAWN_BOARD(self.systems['Component'],
                     SIZE_X, SIZE_Y, MINES)
+
+            components.SPAWN_TIMER(self.systems['Component'])
         else:
             self.systems['Client'] = netplay.Client(self,
                     server_ip=owner['ip'])
@@ -75,7 +77,11 @@ class Game:
 
         c.freeComponent(self.board)
         self.board = None
+        c.freeComponent(self.timer)
+        self.timer = None
+
         components.SPAWN_BOARD(c, SIZE_X, SIZE_Y, MINES)
+        components.SPAWN_TIMER(c)
 
     """
     def reset(self):
