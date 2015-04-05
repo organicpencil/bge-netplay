@@ -6,7 +6,7 @@ Documentation and examples are lacking.  The API is subject to change.  *I would
 What it does:
 - Handle connections
 - Abstract things like input bitmasks and creating remote procedure calls.
-- (Sort of) Forces you into a certain design pattern.
+- (Sort of) forces you into a certain design pattern.
 
 What it doesn't do:
 - Automatic multiplayer.  The developer must have basic programming knowledge to use this library.
@@ -20,7 +20,7 @@ What it doesn't do:
 
 Clone the repository
 ```
-https://github.com/pqftgs/bge-netplay.git
+git clone https://github.com/pqftgs/bge-netplay.git
 cd bge-netplay
 ```
 Symlink or copy the netplay library to examples/common/
