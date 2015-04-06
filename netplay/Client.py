@@ -22,6 +22,9 @@ class Client:
     def onDisconnect(self):
         print ("Disconnected")
 
+    def getPing(self):
+        return self.serverPeer.roundTripTime
+
     def update(self, dt):
         backlog = []
         if self.network.threaded:
