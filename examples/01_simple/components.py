@@ -104,10 +104,8 @@ class Player(Component):
                 ping = self.mgr.game.systems['Client'].getPing()
                 self.ob.children['player_name']['Text'] = "".join([self.getAttribute('playername'), " - ", str(ping), "ms"])
                 sec = ping / 1000.0
-                variance += 6.0 * sec
+                variance += (6.0 * sec) * 2.0
 
         if dist > variance:
             self.ob.worldPosition = pos
-        elif dist > 0.5:
-            self.ob.worldPosition += diff * 0.1
 
