@@ -2,6 +2,7 @@ import mathutils
 import time
 from netplay import Component, Pack
 
+
 def SPAWN_PLAYER(mgr, playername):
     comp = mgr.spawnComponent('Player')
     comp._attributes['playername'] = playername
@@ -97,7 +98,15 @@ class Player(Component):
         diff = pos - self.ob.worldPosition
         dist = diff.length
 
-        if dist > 2.0:
+        variance = 1.0
+        if self.mgr.hostmode == 'client':
+            if self.mgr.game.systems['Input'].input_target is self:
+                ping = self.mgr.game.systems['Client'].getPing()
+                self.ob.children['player_name']['Text'] = "".join([self.getAttribute('playername'), " - ", str(ping), "ms"])
+                sec = ping / 1000.0
+                variance += 6.0 * sec
+
+        if dist > variance:
             self.ob.worldPosition = pos
         elif dist > 0.5:
             self.ob.worldPosition += diff * 0.1
