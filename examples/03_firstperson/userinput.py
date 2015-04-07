@@ -65,6 +65,12 @@ class InputSystem:
         if events[bge.events.TABKEY] == JUST_ACTIVATED:
             self.toggleMouse()
 
+        events = bge.logic.mouse.events
+        if events[bge.events.LEFTMOUSE] == ACTIVE:
+            component.setInput('primary_held', 1)
+        else:
+            component.setInput('primary_held', 0)
+
         if not self.freeMouse:
             self.mouseLook()
 

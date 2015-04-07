@@ -1,6 +1,7 @@
 import math
 import mathutils
 import time
+import bge
 from netplay import Component, Pack
 
 
@@ -98,13 +99,24 @@ class Player(Component):
         if getInput('right_held'):
             move[0] += 1.0
 
+        if getInput('primary_held'):
+            ## Aim test
+            c = self.ob_camera_armature
+            target = c.worldPosition + (c.worldOrientation * mathutils.Vector((0, 1, 0)))
+            ##
+            result = c.rayCast(target, c, 500.0, '')
+            if result[0] is not None:
+                bge.render.drawLine(c.worldPosition, result[1], (1.0, 0.0, 0.0))
+
         move.normalize()
         self.ob.applyMovement(move * speed * dt, True)
+
+
 
         if self.mgr.game.systems['Input'].input_target is self:
             now = time.monotonic()
             if now > self.next_rot_update:
-                euler = self.ob.worldOrientation.to_euler()
+                euler = self.ob_camera_armature.worldOrientation.to_euler()
                 rot_x = int(math.degrees(euler[0]))
                 rot_z = int(math.degrees(euler[2]))
 
@@ -147,5 +159,7 @@ class Player(Component):
     def setRotation(self, data):
         rot_x = data[0]
         rot_z = data[1]
-        euler = mathutils.Euler((math.radians(rot_x), 0.0, math.radians(rot_z)))
-        self.ob.worldOrientation = euler
+        euler0 = mathutils.Euler((0.0, 0.0, math.radians(rot_z)))
+        euler1 = mathutils.Euler((math.radians(rot_x), 0.0, math.radians(rot_z)))
+        self.ob.worldOrientation = euler0
+        self.ob_camera_armature.worldOrientation = euler1
