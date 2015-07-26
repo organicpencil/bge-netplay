@@ -15,8 +15,8 @@ STRING = 'STRING'
 
 # These variables go hand-in-hand
 # See https://en.wikipedia.org/wiki/Integer_%28computer_science%29
-STRING_LENGTH_TYPE = UCHAR
-STRING_LENGTH_MAX = 255
+STRING_LENGTH_TYPE = USHORT
+STRING_LENGTH_MAX = 65535
 
 
 def fromDataList(dataList):
