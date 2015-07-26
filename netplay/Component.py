@@ -494,6 +494,9 @@ class Component:
     def _register(self):
         return
 
+    def _server_setup(self):
+        return
+
     def _setup(self):
         return
 
