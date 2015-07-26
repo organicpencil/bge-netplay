@@ -384,6 +384,9 @@ class Component:
         self._packer.registerRPC(key, callback, datatypes,
                 reliable, replicate)
 
+    def call_rpc(self, key, datalist):
+        self._packer.pack(key, datalist)
+
     def register_input(self, input_name):
         # Run once per input key at component init
         # Creates a bitmask for the input state, allowing 32 keys and

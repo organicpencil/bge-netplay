@@ -70,7 +70,7 @@ class InputSystem:
                 coords = [block.x, block.y]
                 if component.current_block != coords:
                     component.setBlock(coords)
-                    component._packer.pack('set_current_block', coords)
+                    component.call_rpc('set_current_block', coords)
             else:
                 return
         else:
