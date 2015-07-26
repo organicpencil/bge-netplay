@@ -87,6 +87,9 @@ class ServerComponentSystem:
             for key in kwargs:
                 comp.setAttribute(key, kwargs[key])
 
+            # Run server setup function
+            self._server_setup()
+
             comp._send_attributes()
 
             return comp
