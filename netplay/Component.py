@@ -65,7 +65,7 @@ class ServerComponentSystem:
         else:
             return None
 
-    def spawnComponent(self, comp_index):
+    def spawnComponent(self, comp_index, **kwargs):
         if type(comp_index is str):
             comp_index = self.getComponentIndex(comp_index)
 
@@ -82,6 +82,12 @@ class ServerComponentSystem:
 
             self.MainComponent._packer.pack('addComponent',
                 (net_id, comp_index))
+
+            # Set attributes
+            for key in kwargs:
+                comp.setAttribute(key, kwargs[key])
+
+            comp._send_attributes()
 
             return comp
 
@@ -316,7 +322,9 @@ class Component:
 
         self._register()
 
-    def register_attribute(self, key, datatype):
+    def register_attribute(self, key, datatype, default):
+        self._attributes[key] = default
+
         attrs = self._attribute_list
         attrs.append([key, datatype])
 
