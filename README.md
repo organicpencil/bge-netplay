@@ -1,6 +1,8 @@
 # bge-netplay
 A library for building multiplayer prototypes in Blender's built-in game engine.
 
+**Only the minesweeper example is kept up-to-date with current.  The others may not work.**
+
 Documentation and examples are lacking.  The API is subject to change.  *I wouldn't use it yet.*
 
 What it does:
