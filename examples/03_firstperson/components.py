@@ -5,48 +5,36 @@ import bge
 from netplay import Component, Pack
 
 
-def SPAWN_PLAYER(mgr, playername):
-    comp = mgr.spawnComponent('Player')
-    comp._attributes['playername'] = playername
-    comp._attributes['pos_x'] = 0.0
-    comp._attributes['pos_y'] = 0.0
-    comp._attributes['pos_z'] = 0.0
-    comp._attributes['rot_x'] = 0
-    comp._attributes['rot_z'] = 0
-    comp._send_attributes()
-    return comp
-
-
 class Player(Component):
-    def c_register(self):
+    def _register(self):
         # Attributes are used for spawning the object on other clients
-        self.registerAttribute('playername', Pack.STRING)
-        self.registerAttribute('pos_x', Pack.FLOAT)
-        self.registerAttribute('pos_y', Pack.FLOAT)
-        self.registerAttribute('pos_z', Pack.FLOAT)
-        self.registerAttribute('rot_x', Pack.SHORT)
-        self.registerAttribute('rot_z', Pack.SHORT)
+        self.register_attribute('playername', Pack.STRING, "")
+        self.register_attribute('pos_x', Pack.FLOAT, 0.0)
+        self.register_attribute('pos_y', Pack.FLOAT, 0.0)
+        self.register_attribute('pos_z', Pack.FLOAT, 0.0)
+        self.register_attribute('rot_x', Pack.SHORT, 0)
+        self.register_attribute('rot_z', Pack.SHORT, 0)
 
         # Up to 32 inputs can be registered.
         # This merely abstracts a built-in RPC
-        self.registerInput('up_held')
-        self.registerInput('down_held')
-        self.registerInput('left_held')
-        self.registerInput('right_held')
-        self.registerInput('jump_held')
-        self.registerInput('primary_held')
+        self.register_input('up_held')
+        self.register_input('down_held')
+        self.register_input('left_held')
+        self.register_input('right_held')
+        self.register_input('jump_held')
+        self.register_input('primary_held')
 
         # Periodically send position to ensure clients are in sync
         # Signalled server-side
-        self.registerRPC('position', self.setPosition,
+        self.register_rpc('position', self.setPosition,
                 [Pack.FLOAT, Pack.FLOAT, Pack.FLOAT], reliable=False)
 
         # Re-send rotation whenever it changes, at a max rate of 4 per second
         # Signalled only on the controlling client
-        self.registerRPC('rotation', self.setRotation,
+        self.register_rpc('rotation', self.setRotation,
                 [Pack.SHORT, Pack.SHORT], reliable=False)
 
-    def c_setup(self):
+    def _setup(self):
         # Runs when the object is spawned
         attr = self.getAttribute
         owner = self.mgr.owner
@@ -69,7 +57,7 @@ class Player(Component):
 
         self.next_rot_update = time.monotonic() + 0.25
 
-    def c_refresh_attributes(self):
+    def _update_attributes(self):
         # Runs on the server when new clients need information
         # Only need to update attributes that could have changed since creation
         # For example position but not playername
@@ -78,10 +66,10 @@ class Player(Component):
         self.setAttribute('pos_y', pos[1])
         self.setAttribute('pos_z', pos[2])
 
-    def c_destroy(self):
+    def _destroy(self):
         self.ob.endObject()
 
-    def c_update(self, dt):
+    def _update(self, dt):
         speed = 6.0  # Units per second
         getInput = self.getInput
 
@@ -125,9 +113,9 @@ class Player(Component):
 
                     self.last_rot_x = rot_z
                     self.last_rot_y = rot_z
-                    self._packer.pack('rotation', [rot_x, rot_z])
+                    self.call_rpc('rotation', [rot_x, rot_z])
 
-    def c_server_update(self, dt):
+    def _server_update(self, dt):
         now = time.monotonic()
         if now > self.next_update:
             self.next_update = now + 0.5
@@ -139,7 +127,7 @@ class Player(Component):
                 self.last_updated_position[0] = pos[0]
                 self.last_updated_position[1] = pos[1]
                 self.last_updated_position[2] = pos[2]
-                self._packer.pack('position', [pos[0], pos[1], pos[2]])
+                self.call_rpc('position', [pos[0], pos[1], pos[2]])
 
     def setPosition(self, data):
         pos = mathutils.Vector((data[0], data[1], 0.0))

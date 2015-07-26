@@ -36,13 +36,15 @@ class Game:
         # Hack to allow non-dedicated servers.  Doesn't really belong here.
         if mode == netplay.MODE_SERVER or mode == netplay.MODE_OFFLINE:
             c = self.systems['Component']
-            p = components.SPAWN_PLAYER(c, 'ServerHost')
+            p = c.spawnComponent('Player', playername="ServerHost")
+            #p = components.SPAWN_PLAYER(c, 'ServerHost')
             self.systems['Input'].setTarget(p)
 
     def Server_onConnect(self, client_id):
         # Spawn a player component and give input permission
         c = self.systems['Component']
-        p = components.SPAWN_PLAYER(c, 'Client')
+        p = c.spawnComponent('Player', playername="Client")
+        #p = components.SPAWN_PLAYER(c, 'Client')
         p.givePermission(client_id)
 
     def Server_onDisconnect(self, client_id):
