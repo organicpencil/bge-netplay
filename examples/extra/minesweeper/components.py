@@ -33,33 +33,33 @@ def SPAWN_TIMER(mgr):
 
 
 class Player(Component):
-    def c_register(self):
+    def _register(self):
         # Attributes are used for spawning the object on clients
         # These should ONLY be defined once and in c_register
-        self.registerAttribute('playername', Pack.STRING)
-        self.registerAttribute('current_block_x', Pack.USHORT)
-        self.registerAttribute('current_block_y', Pack.USHORT)
+        self.register_attribute('playername', Pack.STRING)
+        self.register_attribute('current_block_x', Pack.USHORT)
+        self.register_attribute('current_block_y', Pack.USHORT)
 
         # RPCs are called during the game
-        self.registerRPC('set_current_block', self.setBlock,
+        self.register_rpc('set_current_block', self.setBlock,
                 [Pack.USHORT, Pack.USHORT])
 
         # Inputs are intended to efficiently sync keystates as a bitmask.
         # Up to 32 keys can be registered.
-        self.registerInput('primary_pressed')
-        self.registerInput('primary_released')
-        self.registerInput('secondary_pressed')
+        self.register_input('primary_pressed')
+        self.register_input('primary_released')
+        self.register_input('secondary_pressed')
         # You can accomplish the same with RPCs if desired.
         # In fact inputs are just an abstraction to this built-in RPC:
         #self.registerRPC('_input', self._process_input, [Pack.UINT])
 
-    def c_refresh_attributes(self):
+    def _update_attributes(self):
         # Runs on server when new clients need information
         # Only need to update attributes that could have changed
         self.setAttribute('current_block_x', self.current_block[0])
         self.setAttribute('current_block_y', self.current_block[1])
 
-    def c_setup(self):
+    def _setup(self):
         # Runs when the objected is spawned on the client
 
         # Access attributes as needed.
@@ -72,7 +72,7 @@ class Player(Component):
         # True when mouse is held
         self.holding = False
 
-    def c_destroy(self):
+    def _destroy(self):
         # Unhover / hold blocks
         self.setBlock([0, 0])
 
@@ -97,7 +97,7 @@ class Player(Component):
         self.current_block[0] = x
         self.current_block[1] = y
 
-    def c_update(self, dt):
+    def _update(self, dt):
         x = self.current_block[0]
         y = self.current_block[1]
         board = self.mgr.game.board
@@ -204,15 +204,15 @@ class Block:
 
 
 class Board(Component):
-    def c_register(self):
-        self.registerAttribute('size_x', Pack.USHORT)
-        self.registerAttribute('size_y', Pack.USHORT)
-        self.registerAttribute('mine_count', Pack.USHORT)
-        self.registerAttribute('mine_locations', Pack.STRING)
-        self.registerAttribute('open_locations', Pack.STRING)
-        self.registerAttribute('flag_locations', Pack.STRING)
+    def _register(self):
+        self.register_attribute('size_x', Pack.USHORT)
+        self.register_attribute('size_y', Pack.USHORT)
+        self.register_attribute('mine_count', Pack.USHORT)
+        self.register_attribute('mine_locations', Pack.STRING)
+        self.register_attribute('open_locations', Pack.STRING)
+        self.register_attribute('flag_locations', Pack.STRING)
 
-    def c_setup(self):
+    def _setup(self):
         self.mgr.game.board = self
 
         self.colors = [
@@ -238,7 +238,7 @@ class Board(Component):
         self.setOpenLocations(attr('open_locations'))
         self.setFlagLocations(attr('flag_locations'))
 
-    def c_refresh_attributes(self):
+    def _update_attributes(self):
         open_locations = ""
         flag_locations = ""
         for x in range(0, self.size_x):
@@ -409,7 +409,7 @@ class Board(Component):
                             self.open(other)
                             #other.reveal()
 
-    def c_destroy(self):
+    def _destroy(self):
         for col in self.grid:
             for block in col:
                 block.destroy()
@@ -418,17 +418,17 @@ class Board(Component):
 
 
 class Timer(Component):
-    def c_register(self):
-        self.registerAttribute('time', Pack.FLOAT)
-        self.registerAttribute('stopped', Pack.CHAR)
+    def _register(self):
+        self.register_attribute('time', Pack.FLOAT)
+        self.register_attribute('stopped', Pack.CHAR)
 
-        self.registerRPC('stop', self.onStop, [Pack.FLOAT, Pack.CHAR])
+        self.register_rpc('stop', self.onStop, [Pack.FLOAT, Pack.CHAR])
 
-    def c_refresh_attributes(self):
+    def _update_attributes(self):
         self.setAttribute('time', self.time)
         self.setAttribute('stopped', self.stopped)
 
-    def c_setup(self):
+    def _setup(self):
         owner = self.mgr.owner
         ob = owner.scene.addObject('Timer', owner)
         ob.worldPosition = [-7.0, 11.0, 0.0]
@@ -437,10 +437,10 @@ class Timer(Component):
 
         self.onStop([self.getAttribute('time'), self.getAttribute('stopped')])
 
-    def c_destroy(self):
+    def _destroy(self):
         self.ob.endObject()
 
-    def c_update(self, dt):
+    def _update(self, dt):
         if not self.stopped:
             self.time += dt
             self.ob['Text'] = "%.0f" % self.time
