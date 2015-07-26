@@ -104,7 +104,7 @@ class ServerComponentSystem:
         self.active_components_[net_id] = None
         self.freed_active_id_.append(net_id)
 
-        comp.c_destroy()
+        comp._destroy()
 
     def getComponent(self, net_id):
         return self.active_components_[net_id]
@@ -178,7 +178,7 @@ class ServerComponentSystem:
                 if statedata is not None:
                     bdata_list.append(statedata)
                 """
-                c.c_refresh_attributes()
+                c._update_attributes()
                 attrdata = c._get_attribute_data()
                 if attrdata is not None:
                     bdata_list.append(attrdata)
@@ -205,8 +205,8 @@ class ServerComponentSystem:
                 if c.input_changed_:
                     c._input_update()
 
-                c.c_update(dt)
-                c.c_server_update(dt)
+                c._update(dt)
+                c._server_update(dt)
 
             i += 1
 
@@ -234,7 +234,7 @@ class ClientComponentSystem(ServerComponentSystem):
     def freeComponent(self, comp):
         net_id = comp.net_id
         self.active_components_[net_id] = None
-        comp.c_destroy()
+        comp._destroy()
 
     def update(self, dt):
         i = 0
@@ -253,7 +253,7 @@ class ClientComponentSystem(ServerComponentSystem):
                 if c.input_changed_:
                     c._input_update()
 
-                c.c_update(dt)
+                c._update(dt)
 
             i += 1
 
@@ -304,19 +304,19 @@ class Component:
 
         # Register the initial attribute packer
         # Ideally replaced during c_register
-        self.registerRPC('_attributes', self._process_attributes, [Pack.UINT])
+        self.register_rpc('_attributes', self._process_attributes, [Pack.UINT])
 
         # Register the input update packer
-        self.registerRPC('_input', self._process_input,
+        self.register_rpc('_input', self._process_input,
             [Pack.UCHAR])
 
         # Register the permission packer
-        self.registerRPC('_permission', self._process_permission,
+        self.register_rpc('_permission', self._process_permission,
             [Pack.USHORT, Pack.UCHAR])
 
-        self.c_register()
+        self._register()
 
-    def registerAttribute(self, key, datatype):
+    def register_attribute(self, key, datatype):
         attrs = self._attribute_list
         attrs.append([key, datatype])
 
@@ -325,7 +325,7 @@ class Component:
             datatype_list.append(d)
 
         # Rebuild attribute packer
-        self.registerRPC('_attributes', self._process_attributes, datatype_list)
+        self.register_rpc('_attributes', self._process_attributes, datatype_list)
 
     def setAttribute(self, key, value):
         self._attributes[key] = value
@@ -342,7 +342,7 @@ class Component:
             attributes[k] = data[i]
             i += 1
 
-        self.c_setup()
+        self._setup()
         self._is_setup = True
 
     def _get_attribute_data(self):
@@ -364,16 +364,16 @@ class Component:
 
         self._packer.pack('_attributes', data)
 
-        self.c_setup()
+        self._setup()
         self._is_setup = True
 
-    def registerRPC(self, key, callback, datatypes,
+    def register_rpc(self, key, callback, datatypes,
             reliable=True, replicate=True):
 
         self._packer.registerRPC(key, callback, datatypes,
                 reliable, replicate)
 
-    def registerInput(self, input_name):
+    def register_input(self, input_name):
         # Run once per input key at component init
         # Creates a bitmask for the input state, allowing 32 keys and
         # consuming 1 to 4 bytes per update.
@@ -483,16 +483,16 @@ class Component:
 
     # Virtual functions
 
-    def c_register(self):
+    def _register(self):
         return
 
-    def c_refresh_attributes(self):
+    def _setup(self):
         return
 
-    def c_setup(self):
+    def _update_attributes(self):
         return
 
-    def c_destroy(self):
+    def _destroy(self):
         return
 
     def _input_update(self):
@@ -505,10 +505,10 @@ class Component:
             state = self.getInputState()
             self._packer.pack('_input', [state])
 
-    def c_update(self, dt):
+    def _update(self, dt):
         return
 
-    def c_server_update(self, dt):
+    def _server_update(self, dt):
         return
 
 
