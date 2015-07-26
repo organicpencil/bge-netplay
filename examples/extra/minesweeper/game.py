@@ -42,10 +42,16 @@ class Game:
             # Spawn blocks and add timer
             self.generate()
             """
-            components.SPAWN_BOARD(self.systems['Component'],
-                    SIZE_X, SIZE_Y, MINES)
+            cmgr = self.systems['Component']
 
-            components.SPAWN_TIMER(self.systems['Component'])
+            self.board = cmgr.spawnComponent('Board', size_x=SIZE_X, size_y=SIZE_Y,
+                mine_count=MINES)
+
+            self.timer = cmgr.spawnComponent('Timer')
+
+            #components.SPAWN_BOARD(self.systems['Component'],
+            #        SIZE_X, SIZE_Y, MINES)
+            #components.SPAWN_TIMER(self.systems['Component'])
         else:
             self.systems['Client'] = netplay.Client(self,
                     server_ip=owner['ip'])
@@ -54,9 +60,9 @@ class Game:
         self.systems['Input'] = InputSystem(self)
 
         if mode == netplay.MODE_SERVER or mode == netplay.MODE_OFFLINE:
-            c = self.systems['Component']
-            #p = c.spawnComponent('Player')
-            p = components.SPAWN_PLAYER(c, 'TheHost')
+            cmgr = self.systems['Component']
+            p = cmgr.spawnComponent('Player', playername='TheHost')
+            #p = components.SPAWN_PLAYER(c, 'TheHost')
             self.systems['Input'].setTarget(p)
 
         ## Used to determine frame time delta.
@@ -80,13 +86,18 @@ class Game:
         c.freeComponent(self.timer)
         self.timer = None
 
-        components.SPAWN_BOARD(c, SIZE_X, SIZE_Y, MINES)
-        components.SPAWN_TIMER(c)
+        c.spawnComponent('Board', size_x=SIZE_X, size_y=SIZE_Y,
+            mine_count=MINES)
+
+        c.spawnComponent('Timer')
+        #components.SPAWN_BOARD(c, SIZE_X, SIZE_Y, MINES)
+        #components.SPAWN_TIMER(c)
 
     def Server_onConnect(self, client_id):
         # Spawn a player component and give input permission
         c = self.systems['Component']
-        p = components.SPAWN_PLAYER(c, 'AClient')
+        p = c.spawnComponent('Player', playername='AClient')
+        #p = components.SPAWN_PLAYER(c, 'AClient')
         p.givePermission(client_id)
 
     def Server_onDisconnect(self, client_id):

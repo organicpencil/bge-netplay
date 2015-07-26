@@ -7,28 +7,6 @@ from netplay import Component, Pack
 
 
 ## Call these on the server
-def SPAWN_PLAYER(mgr, playername):
-    comp = mgr.spawnComponent('Player')
-    comp._attributes['playername'] = playername
-    comp._attributes['current_block_x'] = 0
-    comp._attributes['current_block_y'] = 0
-    comp._send_attributes()
-    return comp
-
-
-def SPAWN_BOARD(mgr, x, y, mines):
-    comp = mgr.spawnComponent('Board')
-    comp.generateMineLocations(x, y, mines)
-    comp._send_attributes()
-    return comp
-
-
-def SPAWN_TIMER(mgr):
-    comp = mgr.spawnComponent('Timer')
-    comp._attributes['time'] = 0.0
-    comp._attributes['stopped'] = 0
-    comp._send_attributes()
-    return comp
 ##
 
 
@@ -36,9 +14,9 @@ class Player(Component):
     def _register(self):
         # Attributes are used for spawning the object on clients
         # These should ONLY be defined once and in c_register
-        self.register_attribute('playername', Pack.STRING)
-        self.register_attribute('current_block_x', Pack.USHORT)
-        self.register_attribute('current_block_y', Pack.USHORT)
+        self.register_attribute('playername', Pack.STRING, 'unnamed')
+        self.register_attribute('current_block_x', Pack.USHORT, 0)
+        self.register_attribute('current_block_y', Pack.USHORT, 0)
 
         # RPCs are called during the game
         self.register_rpc('set_current_block', self.setBlock,
@@ -205,12 +183,15 @@ class Block:
 
 class Board(Component):
     def _register(self):
-        self.register_attribute('size_x', Pack.USHORT)
-        self.register_attribute('size_y', Pack.USHORT)
-        self.register_attribute('mine_count', Pack.USHORT)
-        self.register_attribute('mine_locations', Pack.STRING)
-        self.register_attribute('open_locations', Pack.STRING)
-        self.register_attribute('flag_locations', Pack.STRING)
+        self.register_attribute('size_x', Pack.USHORT, 0)
+        self.register_attribute('size_y', Pack.USHORT, 0)
+        self.register_attribute('mine_count', Pack.USHORT, 0)
+        self.register_attribute('mine_locations', Pack.STRING, "")
+        self.register_attribute('open_locations', Pack.STRING, "")
+        self.register_attribute('flag_locations', Pack.STRING, "")
+
+    def _server_setup(self):
+        self.generateMineLocations()
 
     def _setup(self):
         self.mgr.game.board = self
@@ -226,7 +207,6 @@ class Board(Component):
             [0.0, 0.0, 0.0, 1.0],
             [0.0, 0.0, 0.0, 1.0],
         ]
-
 
         attr = self.getAttribute
 
@@ -304,16 +284,14 @@ class Board(Component):
             block = self.grid[int(x)][int(y)]
             block.toggleFlag()
 
-    def generateMineLocations(self, size_x, size_y, mine_count):
-        self.size_x = size_x
-        self.size_y = size_y
+    def generateMineLocations(self):
+        self.size_x = size_x = self.getAttribute('size_x')
+        self.size_y = size_y = self.getAttribute('size_y')
+        mine_count = self.getAttribute('mine_count')
 
         self.initGrid()
 
         # Server only, run this instead of setting initial attributes
-        self.setAttribute('size_x', size_x)
-        self.setAttribute('size_y', size_y)
-        self.setAttribute('mine_count', mine_count)
         self.setAttribute('mine_locations', "")
         self.setAttribute('open_locations', "")
         self.setAttribute('flag_locations', "")
@@ -405,7 +383,7 @@ class Board(Component):
 
                     if (0 <= x < self.size_x) and (0 <= y < self.size_y):
                         other = self.grid[x][y]
-                        if other.isOpen == False and other.isFlagged == False:
+                        if not other.isOpen and not other.isFlagged:
                             self.open(other)
                             #other.reveal()
 
@@ -419,8 +397,8 @@ class Board(Component):
 
 class Timer(Component):
     def _register(self):
-        self.register_attribute('time', Pack.FLOAT)
-        self.register_attribute('stopped', Pack.CHAR)
+        self.register_attribute('time', Pack.FLOAT, 0.0)
+        self.register_attribute('stopped', Pack.CHAR, 0)
 
         self.register_rpc('stop', self.onStop, [Pack.FLOAT, Pack.CHAR])
 
