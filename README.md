@@ -25,11 +25,7 @@ Clone the repository
 git clone https://github.com/pqftgs/bge-netplay.git
 cd bge-netplay
 ```
-Symlink or copy the netplay library to examples/common/
-```
-ln -rs netplay examples/common/netplay
-```
-Download extra dependencies (bgui and enet)
+Set up dependencies
 ```
 ./download_deps.sh
 ```

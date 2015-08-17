@@ -1,3 +1,5 @@
+ln -rs netplay examples/common/netplay
+
 cd netplay/enet/
 
 rm -rf linux32
