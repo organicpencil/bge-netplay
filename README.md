@@ -1,19 +1,20 @@
 # bge-netplay
 A library for building multiplayer prototypes in Blender's built-in game engine.
 
-**Only the minesweeper example is kept up-to-date.  The others may not work.**
-
 Documentation and examples are lacking.  The API is subject to change.  *I wouldn't use it yet.*
 
+**Only the minesweeper example is kept up-to-date.  The others may not work.**
+
 What it does:
-- Handle connections
-- Abstract things like input bitmasks and remote procedure calls.
-- (Sort of) forces you into a certain design pattern.
+- Handle data transfer and connection management using ENet
+- Abstract things like input bitmasks and remote procedure calls
+- Gives the developer control over what kind of data is sent (for the most part)
 
 What it doesn't do:
-- Automatic multiplayer.  The developer must have basic programming knowledge to use this library.
-- Compete with commercial solutions.  This is intended for prototyping.  Expect bugs and slowness.
-- Work on MacOS or Windows64 (yet)
+- Automatic multiplayer.  The developer must have intermediate Python skills.
+- Overcomplicate things.  Stuff like audio isn't abstracted, so your BGE knowledge still applies.
+- Compete.  This is intended for prototyping, so expect bugs/slowness/security issues.
+- Work on MacOS (yet)
 
 
 
