@@ -639,8 +639,22 @@ class DynamicComponent(Component):
         self.update_timer = self.update_timer_max = 6
         self.last_physics_state = []
 
+        self._new_pos = [attr('_pos_x'), attr('_pos_y'), attr('_pos_z')]
+        self._new_linv = [attr('_linv_x'), attr('_linv_y'), attr('_linv_z')]
+
     def _destroy(self):
         self.ob.endObject()
+
+    def _client_update(self, dt):
+        npos = self._new_pos
+        diff = mathutils.Vector(npos) - self.ob.worldPosition
+        self.ob.worldPosition += diff * 0.1
+
+        nlinv = self._new_linv
+        vel = self.ob.getLinearVelocity(False)
+        diff = mathutils.Vector(nlinv) - vel
+        vel += diff * 0.1
+        self.ob.setLinearVelocity(vel, False)
 
     def _server_update(self, dt):
         self.update_timer -= 1
@@ -662,13 +676,15 @@ class DynamicComponent(Component):
 
     def updatePhysics(self, data):
         pos = [data[0], data[1], data[2]]
-        self.ob.worldPosition = pos  # Should lerp this.. or something
+        #self.ob.worldPosition = pos  # Should lerp this.. or something
+        self._new_pos = pos
 
         rot = mathutils.Euler((data[3], data[4], data[5]))
         self.ob.worldOrientation = rot
 
         linv = [data[6], data[7], data[8]]
-        self.ob.setLinearVelocity(linv, False)
+        #self.ob.setLinearVelocity(linv, False)
+        self._new_linv = linv
 
 
 class RigidComponent(Component):
@@ -742,8 +758,22 @@ class RigidComponent(Component):
         self.update_timer = self.update_timer_max = 6
         self.last_physics_state = []
 
+        self._new_pos = [attr('_pos_x'), attr('_pos_y'), attr('_pos_z')]
+        self._new_linv = [attr('_linv_x'), attr('_linv_y'), attr('_linv_z')]
+
     def _destroy(self):
         self.ob.endObject()
+
+    def _client_update(self, dt):
+        npos = self._new_pos
+        diff = mathutils.Vector(npos) - self.ob.worldPosition
+        self.ob.worldPosition += diff * 0.1
+
+        nlinv = self._new_linv
+        vel = self.ob.getLinearVelocity(False)
+        diff = mathutils.Vector(nlinv) - vel
+        vel += diff * 0.1
+        self.ob.setLinearVelocity(vel, False)
 
     def _server_update(self, dt):
         self.update_timer -= 1
@@ -767,13 +797,15 @@ class RigidComponent(Component):
 
     def updatePhysics(self, data):
         pos = [data[0], data[1], data[2]]
-        self.ob.worldPosition = pos  # Should lerp this
+        #self.ob.worldPosition = pos  # Should lerp this
+        self._new_pos = pos
 
         rot = mathutils.Euler((data[3], data[4], data[5]))
         self.ob.worldOrientation = rot
 
         linv = [data[6], data[7], data[8]]
-        self.ob.setLinearVelocity(linv, False)
+        #self.ob.setLinearVelocity(linv, False)
+        self._new_linv = linv
 
         angv = [data[9], data[10], data[11]]
         self.ob.setAngularVelocity(angv, False)
