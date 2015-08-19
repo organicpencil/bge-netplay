@@ -190,7 +190,8 @@ class Server:
                                 # Forward the command to other clients
                                 k = 0
                                 for c in self.client_list:
-                                    if c is not None and k != peerID:
+                                    #if c is not None and k != peerID:
+                                    if c is not None:  # Should have done this a long time ago, client-side prediction was so broken
                                         #self.network.send(c.peer, self.network.createPacket(bdata))
                                         if reliable:
                                             c.reliable_data.append(bdata)

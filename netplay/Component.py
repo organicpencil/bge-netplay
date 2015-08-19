@@ -387,6 +387,13 @@ class Component:
     def call_rpc(self, key, datalist):
         self._packer.pack(key, datalist)
 
+        # Apply now if called on the server
+        # This potentially wastes CPU time, for example updating position
+        if self.mgr.hostmode == 'server':
+            p_id = self._packer.pack_index[key]
+            dataprocessor = self._packer.pack_list[p_id]
+            dataprocessor.callback(datalist)
+
     def register_input(self, input_name):
         # Run once per input key at component init
         # Creates a bitmask for the input state, allowing 32 keys and
