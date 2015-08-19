@@ -581,17 +581,17 @@ class DynamicComponent(Component):
         self.obj = None
 
     def _register(self):
-        self.register_attribute('pos_x', Pack.FLOAT, 0.0)
-        self.register_attribute('pos_y', Pack.FLOAT, 0.0)
-        self.register_attribute('pos_z', Pack.FLOAT, 0.0)
-        self.register_attribute('rot_x', Pack.FLOAT, 0.0)
-        self.register_attribute('rot_y', Pack.FLOAT, 0.0)
-        self.register_attribute('rot_z', Pack.FLOAT, 0.0)
-        self.register_attribute('linv_x', Pack.FLOAT, 0.0)
-        self.register_attribute('linv_y', Pack.FLOAT, 0.0)
-        self.register_attribute('linv_z', Pack.FLOAT, 0.0)
+        self.register_attribute('_pos_x', Pack.FLOAT, 0.0)
+        self.register_attribute('_pos_y', Pack.FLOAT, 0.0)
+        self.register_attribute('_pos_z', Pack.FLOAT, 0.0)
+        self.register_attribute('_rot_x', Pack.FLOAT, 0.0)
+        self.register_attribute('_rot_y', Pack.FLOAT, 0.0)
+        self.register_attribute('_rot_z', Pack.FLOAT, 0.0)
+        self.register_attribute('_linv_x', Pack.FLOAT, 0.0)
+        self.register_attribute('_linv_y', Pack.FLOAT, 0.0)
+        self.register_attribute('_linv_z', Pack.FLOAT, 0.0)
 
-        self.register_rpc('physics_state', self.updatePhysics,
+        self.register_rpc('_physics_state', self.updatePhysics,
                 [
                     Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
                     Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
@@ -600,19 +600,19 @@ class DynamicComponent(Component):
 
     def _update_attributes(self):
         pos = self.ob.worldPosition
-        self.setAttribute('pos_x', pos[0])
-        self.setAttribute('pos_y', pos[1])
-        self.setAttribute('pos_z', pos[2])
+        self.setAttribute('_pos_x', pos[0])
+        self.setAttribute('_pos_y', pos[1])
+        self.setAttribute('_pos_z', pos[2])
 
         rot = self.ob.worldOrientation.to_euler()
-        self.setAttribute('rot_x', rot[0])
-        self.setAttribute('rot_y', rot[1])
-        self.setAttribute('rot_z', rot[2])
+        self.setAttribute('_rot_x', rot[0])
+        self.setAttribute('_rot_y', rot[1])
+        self.setAttribute('_rot_z', rot[2])
 
         linv = self.ob.getLinearVelocity(False)
-        self.setAttribute('linv_x', linv[0])
-        self.setAttribute('linv_y', linv[1])
-        self.setAttribute('linv_z', linv[2])
+        self.setAttribute('_linv_x', linv[0])
+        self.setAttribute('_linv_y', linv[1])
+        self.setAttribute('_linv_z', linv[2])
 
     def _setup(self):
         if self.obj is None:
@@ -624,11 +624,11 @@ class DynamicComponent(Component):
 
         self.ob = ob = own.scene.addObject(self.obj, own)
 
-        ob.worldPosition = [attr('pos_x'), attr('pos_y'), attr('pos_z')]
-        ob.worldOrientation = mathutils.Euler((attr('rot_x'), attr('rot_y'),
-                attr('rot_z')))
-        ob.setLinearVelocity((attr('linv_x'), attr('linv_y'), attr('linv_z')),
-                False)
+        ob.worldPosition = [attr('_pos_x'), attr('_pos_y'), attr('_pos_z')]
+        ob.worldOrientation = mathutils.Euler((attr('_rot_x'), attr('_rot_y'),
+                attr('_rot_z')))
+        ob.setLinearVelocity((attr('_linv_x'), attr('_linv_y'),
+                attr('_linv_z')), False)
 
         ob['component'] = self
 
@@ -654,7 +654,7 @@ class DynamicComponent(Component):
 
             if physics_state != self.last_physics_state:
                 self.last_physics_state = physics_state
-                self.call_rpc('physics_state', physics_state)
+                self.call_rpc('_physics_state', physics_state)
 
     def updatePhysics(self, data):
         pos = [data[0], data[1], data[2]]
@@ -673,20 +673,20 @@ class RigidComponent(Component):
         self.obj = None
 
     def _register(self):
-        self.register_attribute('pos_x', Pack.FLOAT, 0.0)
-        self.register_attribute('pos_y', Pack.FLOAT, 0.0)
-        self.register_attribute('pos_z', Pack.FLOAT, 0.0)
-        self.register_attribute('rot_x', Pack.FLOAT, 0.0)
-        self.register_attribute('rot_y', Pack.FLOAT, 0.0)
-        self.register_attribute('rot_z', Pack.FLOAT, 0.0)
-        self.register_attribute('linv_x', Pack.FLOAT, 0.0)
-        self.register_attribute('linv_y', Pack.FLOAT, 0.0)
-        self.register_attribute('linv_z', Pack.FLOAT, 0.0)
-        self.register_attribute('angv_x', Pack.FLOAT, 0.0)
-        self.register_attribute('angv_y', Pack.FLOAT, 0.0)
-        self.register_attribute('angv_z', Pack.FLOAT, 0.0)
+        self.register_attribute('_pos_x', Pack.FLOAT, 0.0)
+        self.register_attribute('_pos_y', Pack.FLOAT, 0.0)
+        self.register_attribute('_pos_z', Pack.FLOAT, 0.0)
+        self.register_attribute('_rot_x', Pack.FLOAT, 0.0)
+        self.register_attribute('_rot_y', Pack.FLOAT, 0.0)
+        self.register_attribute('_rot_z', Pack.FLOAT, 0.0)
+        self.register_attribute('_linv_x', Pack.FLOAT, 0.0)
+        self.register_attribute('_linv_y', Pack.FLOAT, 0.0)
+        self.register_attribute('_linv_z', Pack.FLOAT, 0.0)
+        self.register_attribute('_angv_x', Pack.FLOAT, 0.0)
+        self.register_attribute('_angv_y', Pack.FLOAT, 0.0)
+        self.register_attribute('_angv_z', Pack.FLOAT, 0.0)
 
-        self.register_rpc('physics_state', self.updatePhysics,
+        self.register_rpc('_physics_state', self.updatePhysics,
                 [
                     Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
                     Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
@@ -696,24 +696,24 @@ class RigidComponent(Component):
 
     def _update_attributes(self):
         pos = self.ob.worldPosition
-        self.setAttribute('pos_x', pos[0])
-        self.setAttribute('pos_y', pos[1])
-        self.setAttribute('pos_z', pos[2])
+        self.setAttribute('_pos_x', pos[0])
+        self.setAttribute('_pos_y', pos[1])
+        self.setAttribute('_pos_z', pos[2])
 
         rot = self.ob.worldOrientation.to_euler()
-        self.setAttribute('rot_x', rot[0])
-        self.setAttribute('rot_y', rot[1])
-        self.setAttribute('rot_z', rot[2])
+        self.setAttribute('_rot_x', rot[0])
+        self.setAttribute('_rot_y', rot[1])
+        self.setAttribute('_rot_z', rot[2])
 
         linv = self.ob.getLinearVelocity(False)
-        self.setAttribute('linv_x', linv[0])
-        self.setAttribute('linv_y', linv[1])
-        self.setAttribute('linv_z', linv[2])
+        self.setAttribute('_linv_x', linv[0])
+        self.setAttribute('_linv_y', linv[1])
+        self.setAttribute('_linv_z', linv[2])
 
         angv = self.ob.getAngularVelocity(False)
-        self.setAttribute('angv_x', angv[0])
-        self.setAttribute('angv_y', angv[1])
-        self.setAttribute('angv_z', angv[2])
+        self.setAttribute('_angv_x', angv[0])
+        self.setAttribute('_angv_y', angv[1])
+        self.setAttribute('_angv_z', angv[2])
 
     def _setup(self):
         if self.obj is None:
@@ -725,13 +725,13 @@ class RigidComponent(Component):
 
         self.ob = ob = own.scene.addObject(self.obj, own)
 
-        ob.worldPosition = [attr('pos_x'), attr('pos_y'), attr('pos_z')]
-        ob.worldOrientation = mathutils.Euler((attr('rot_x'), attr('rot_y'),
-                attr('rot_z')))
-        ob.setLinearVelocity((attr('linv_x'), attr('linv_y'), attr('linv_z')),
-                False)
-        ob.setAngularVelocity((attr('angv_x'), attr('angv_y'), attr('angv_z')),
-                False)
+        ob.worldPosition = [attr('_pos_x'), attr('_pos_y'), attr('_pos_z')]
+        ob.worldOrientation = mathutils.Euler((attr('_rot_x'), attr('_rot_y'),
+                attr('_rot_z')))
+        ob.setLinearVelocity((attr('_linv_x'), attr('_linv_y'),
+                attr('_linv_z')), False)
+        ob.setAngularVelocity((attr('_angv_x'), attr('_angv_y'),
+                attr('_angv_z')), False)
 
         ob['component'] = self
 
@@ -759,7 +759,7 @@ class RigidComponent(Component):
 
             if physics_state != self.last_physics_state:
                 self.last_physics_state = physics_state
-                self.call_rpc('physics_state', physics_state)
+                self.call_rpc('_physics_state', physics_state)
 
     def updatePhysics(self, data):
         pos = [data[0], data[1], data[2]]
