@@ -637,10 +637,14 @@ class DynamicComponent(Component):
         ob['component'] = self
 
         self.update_timer = self.update_timer_max = 6
-        self.last_physics_state = []
+        self._last_pos = mathutils.Vector(self.ob.worldPosition)
+        self._last_rot = self.ob.worldOrientation.to_euler()
+        self._last_linv = self.ob.getLinearVelocity(False)
 
         self._new_pos = [attr('_pos_x'), attr('_pos_y'), attr('_pos_z')]
         self._new_linv = [attr('_linv_x'), attr('_linv_y'), attr('_linv_z')]
+
+        self._idle = True  # Handy for debugging
 
     def _destroy(self):
         self.ob.endObject()
@@ -666,13 +670,36 @@ class DynamicComponent(Component):
             rot = ob.worldOrientation.to_euler()
             linv = ob.getLinearVelocity(False)
 
-            physics_state = [pos[0], pos[1], pos[2],
-                    rot[0], rot[1], rot[2],
-                    linv[0], linv[1], linv[2]]
+            update = False
+            if (pos - self._last_pos).length > 0.5:
+                update = True
+            else:
+                lastrot = self._last_rot
+                for i in range(0, 3):
+                    if abs(rot[i] - lastrot[i]) > 0.1:
+                        update = True
+                        break
 
-            if physics_state != self.last_physics_state:
-                self.last_physics_state = physics_state
+                if not update:
+                    lastlinv = self._last_linv
+                    for i in range(0, 3):
+                        if abs(linv[i] - lastlinv[i]) > 0.1:
+                            update = True
+                            break
+
+            if update:
+                self._last_pos = mathutils.Vector(self.ob.worldPosition)
+                self._last_rot = self.ob.worldOrientation.to_euler()
+                self._last_linv = self.ob.getLinearVelocity(False)
+
+                physics_state = [pos[0], pos[1], pos[2],
+                        rot[0], rot[1], rot[2],
+                        linv[0], linv[1], linv[2]]
+
                 self.call_rpc('_physics_state', physics_state)
+                self._idle = False
+            else:
+                self._idle = True
 
     def updatePhysics(self, data):
         pos = [data[0], data[1], data[2]]
@@ -756,10 +783,15 @@ class RigidComponent(Component):
         ob['component'] = self
 
         self.update_timer = self.update_timer_max = 6
-        self.last_physics_state = []
+        self._last_pos = mathutils.Vector(self.ob.worldPosition)
+        self._last_rot = self.ob.worldOrientation.to_euler()
+        self._last_linv = self.ob.getLinearVelocity(False)
+        self._last_angv = self.ob.getAngularVelocity(False)
 
         self._new_pos = [attr('_pos_x'), attr('_pos_y'), attr('_pos_z')]
         self._new_linv = [attr('_linv_x'), attr('_linv_y'), attr('_linv_z')]
+
+        self._idle = True  # Handy for debugging
 
     def _destroy(self):
         self.ob.endObject()
@@ -786,14 +818,45 @@ class RigidComponent(Component):
             linv = ob.getLinearVelocity(False)
             angv = ob.getAngularVelocity(False)
 
-            physics_state = [pos[0], pos[1], pos[2],
-                    rot[0], rot[1], rot[2],
-                    linv[0], linv[1], linv[2],
-                    angv[0], angv[1], angv[2]]
+            update = False
+            if (pos - self._last_pos).length > 0.5:
+                update = True
+            else:
+                lastrot = self._last_rot
+                for i in range(0, 3):
+                    if abs(rot[i] - lastrot[i]) > 0.1:
+                        update = True
+                        break
 
-            if physics_state != self.last_physics_state:
-                self.last_physics_state = physics_state
+                if not update:
+                    lastlinv = self._last_linv
+                    for i in range(0, 3):
+                        if abs(linv[i] - lastlinv[i]) > 0.1:
+                            update = True
+                            break
+
+                    if not update:
+                        lastangv = self._last_angv
+                        for i in range(0, 3):
+                            if abs(angv[i] - lastangv[i]) > 0.1:
+                                update = True
+                                break
+
+            if update:
+                self._last_pos = mathutils.Vector(self.ob.worldPosition)
+                self._last_rot = self.ob.worldOrientation.to_euler()
+                self._last_linv = self.ob.getLinearVelocity(False)
+                self._last_angv = self.ob.getAngularVelocity(False)
+
+                physics_state = [pos[0], pos[1], pos[2],
+                        rot[0], rot[1], rot[2],
+                        linv[0], linv[1], linv[2],
+                        angv[0], angv[1], angv[2]]
+
                 self.call_rpc('_physics_state', physics_state)
+                self._idle = False
+            else:
+                self._idle = True
 
     def updatePhysics(self, data):
         pos = [data[0], data[1], data[2]]
