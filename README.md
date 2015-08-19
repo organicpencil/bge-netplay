@@ -3,7 +3,7 @@ A library for building multiplayer prototypes in Blender's built-in game engine.
 
 Documentation and examples are lacking.  The API is subject to change.  *I wouldn't use it yet.*
 
-**Only the minesweeper example is kept up-to-date.  The others may not work.**
+**Most of the examples are broken except 04_physics**
 
 What it does:
 - Handle data transfer and connection management using ENet
@@ -13,7 +13,7 @@ What it does:
 What it doesn't do:
 - Automatic multiplayer.  The developer must have intermediate Python skills.
 - Overcomplicate things.  Stuff like audio isn't abstracted, so your BGE knowledge still applies.
-- Real games.  This lib is a work-in-progress, so expect bugs/slowness/security issues.
+- Real games.  The lib is a work-in-progress, so expect bugs/slowness/security issues.
 - Work on MacOS (yet)
 
 
