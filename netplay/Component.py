@@ -566,3 +566,211 @@ class MainComponent(Component):
 
     def setClientID(self, data):
         self.mgr.client_id = data[0]
+
+
+class DynamicComponent(Component):
+    def __init__(self, mgr, net_id):
+        Component.__init__(self, mgr, net_id)
+        self.obj = None
+
+    def _register(self):
+        self.register_attribute('pos_x', Pack.FLOAT, 0.0)
+        self.register_attribute('pos_y', Pack.FLOAT, 0.0)
+        self.register_attribute('pos_z', Pack.FLOAT, 0.0)
+        self.register_attribute('rot_x', Pack.FLOAT, 0.0)
+        self.register_attribute('rot_y', Pack.FLOAT, 0.0)
+        self.register_attribute('rot_z', Pack.FLOAT, 0.0)
+        self.register_attribute('linv_x', Pack.FLOAT, 0.0)
+        self.register_attribute('linv_y', Pack.FLOAT, 0.0)
+        self.register_attribute('linv_z', Pack.FLOAT, 0.0)
+
+        self.register_rpc('physics_state', self.updatePhysics,
+                [
+                    Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
+                    Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
+                    Pack.FLOAT, Pack.FLOAT, Pack.FLOAT
+                ])
+
+    def _update_attributes(self):
+        pos = self.ob.worldPosition
+        self.setAttribute('pos_x', pos[0])
+        self.setAttribute('pos_y', pos[1])
+        self.setAttribute('pos_z', pos[2])
+
+        rot = self.ob.worldOrientation.to_euler()
+        self.setAttribute('rot_x', rot[0])
+        self.setAttribute('rot_y', rot[1])
+        self.setAttribute('rot_z', rot[2])
+
+        linv = self.ob.getLinearVelocity(False)
+        self.setAttribute('linv_x', linv[0])
+        self.setAttribute('linv_y', linv[1])
+        self.setAttribute('linv_z', linv[2])
+
+    def _setup(self):
+        if self.obj is None:
+            print ("Error - physics object not defined")
+            return
+
+        attr = self.getAttribute
+        own = self.mgr.owner
+
+        self.ob = ob = own.scene.addObject(self.obj, own)
+
+        ob.worldPosition = [attr('pos_x'), attr('pos_y'), attr('pos_z')]
+        ob.worldOrientation = mathutils.Euler((attr('rot_x'), attr('rot_y'),
+                attr('rot_z')))
+        ob.setLinearVelocity((attr('linv_x'), attr('linv_y'), attr('linv_z')),
+                False)
+
+        ob['component'] = self
+
+        self.update_timer = self.update_timer_max = 6
+        self.last_physics_state = []
+
+    def _destroy(self):
+        self.ob.endObject()
+
+    def _server_update(self, dt):
+        self.update_timer -= 1
+        if self.update_timer == 0:
+            self.update_timer = self.update_timer_max
+
+            ob = self.ob
+            pos = ob.worldPosition
+            rot = ob.worldOrientation.to_euler()
+            linv = ob.getLinearVelocity(False)
+
+            physics_state = [pos[0], pos[1], pos[2],
+                    rot[0], rot[1], rot[2],
+                    linv[0], linv[1], linv[2]]
+
+            if physics_state != self.last_physics_state:
+                self.last_physics_state = physics_state
+                self.call_rpc('physics_state', physics_state)
+
+    def updatePhysics(self, data):
+        pos = [data[0], data[1], data[2]]
+        self.ob.worldPosition = pos  # Should lerp this.. or something
+
+        rot = mathutils.Euler((data[3], data[4], data[5]))
+        self.ob.worldOrientation = rot
+
+        linv = [data[6], data[7], data[8]]
+        self.ob.setLinearVelocity(linv, False)
+
+
+class RigidComponent(Component):
+    def __init__(self, mgr, net_id):
+        Component.__init__(self, mgr, net_id)
+        self.obj = None
+
+    def _register(self):
+        self.register_attribute('pos_x', Pack.FLOAT, 0.0)
+        self.register_attribute('pos_y', Pack.FLOAT, 0.0)
+        self.register_attribute('pos_z', Pack.FLOAT, 0.0)
+        self.register_attribute('rot_x', Pack.FLOAT, 0.0)
+        self.register_attribute('rot_y', Pack.FLOAT, 0.0)
+        self.register_attribute('rot_z', Pack.FLOAT, 0.0)
+        self.register_attribute('linv_x', Pack.FLOAT, 0.0)
+        self.register_attribute('linv_y', Pack.FLOAT, 0.0)
+        self.register_attribute('linv_z', Pack.FLOAT, 0.0)
+        self.register_attribute('angv_x', Pack.FLOAT, 0.0)
+        self.register_attribute('angv_y', Pack.FLOAT, 0.0)
+        self.register_attribute('angv_z', Pack.FLOAT, 0.0)
+
+        self.register_rpc('physics_state', self.updatePhysics,
+                [
+                    Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
+                    Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
+                    Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
+                    Pack.FLOAT, Pack.FLOAT, Pack.FLOAT
+                ])
+
+    def _update_attributes(self):
+        pos = self.ob.worldPosition
+        self.setAttribute('pos_x', pos[0])
+        self.setAttribute('pos_y', pos[1])
+        self.setAttribute('pos_z', pos[2])
+
+        rot = self.ob.worldOrientation.to_euler()
+        self.setAttribute('rot_x', rot[0])
+        self.setAttribute('rot_y', rot[1])
+        self.setAttribute('rot_z', rot[2])
+
+        linv = self.ob.getLinearVelocity(False)
+        self.setAttribute('linv_x', linv[0])
+        self.setAttribute('linv_y', linv[1])
+        self.setAttribute('linv_z', linv[2])
+
+        angv = self.ob.getAngularVelocity(False)
+        self.setAttribute('angv_x', angv[0])
+        self.setAttribute('angv_y', angv[1])
+        self.setAttribute('angv_z', angv[2])
+
+    def _setup(self):
+        if self.obj is None:
+            print ("Error - physics object not defined")
+            return
+
+        attr = self.getAttribute
+        own = self.mgr.owner
+
+        self.ob = ob = own.scene.addObject(self.obj, own)
+
+        ob.worldPosition = [attr('pos_x'), attr('pos_y'), attr('pos_z')]
+        ob.worldOrientation = mathutils.Euler((attr('rot_x'), attr('rot_y'),
+                attr('rot_z')))
+        ob.setLinearVelocity((attr('linv_x'), attr('linv_y'), attr('linv_z')),
+                False)
+        ob.setAngularVelocity((attr('angv_x'), attr('angv_y'), attr('angv_z')),
+                False)
+
+        ob['component'] = self
+
+        self.update_timer = self.update_timer_max = 6
+        self.last_physics_state = []
+
+    def _destroy(self):
+        self.ob.endObject()
+
+    def _server_update(self, dt):
+        self.update_timer -= 1
+        if self.update_timer == 0:
+            self.update_timer = self.update_timer_max
+
+            ob = self.ob
+            pos = ob.worldPosition
+            rot = ob.worldOrientation.to_euler()
+            linv = ob.getLinearVelocity(False)
+            angv = ob.getAngularVelocity(False)
+
+            physics_state = [pos[0], pos[1], pos[2],
+                    rot[0], rot[1], rot[2],
+                    linv[0], linv[1], linv[2],
+                    angv[0], angv[1], angv[2]]
+
+            if physics_state != self.last_physics_state:
+                self.last_physics_state = physics_state
+                self.call_rpc('physics_state', physics_state)
+
+    def updatePhysics(self, data):
+        pos = [data[0], data[1], data[2]]
+        self.ob.worldPosition = pos  # Should lerp this
+
+        rot = mathutils.Euler((data[3], data[4], data[5]))
+        self.ob.worldOrientation = rot
+
+        linv = [data[6], data[7], data[8]]
+        self.ob.setLinearVelocity(linv, False)
+
+        angv = [data[9], data[10], data[11]]
+        self.ob.setAngularVelocity(angv, False)
+
+
+class CharacterComponent(Component):
+    None
+
+
+def SoftComponent(Component):
+    None
