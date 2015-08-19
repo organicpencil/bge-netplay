@@ -8,18 +8,18 @@ Documentation and examples are lacking.  The API is subject to change.  *I would
 What it does:
 - Handle data transfer and connection management using ENet
 - Abstract things like input bitmasks and remote procedure calls
-- Gives the developer control over what kind of data is sent (for the most part)
+- Builtin physics prefabs to get you up and running quickly
+- (eventually) NAT punchthrough, relay hosting, LAN discovery
 
 What it doesn't do:
-- Automatic multiplayer.  The developer must have intermediate Python skills.
-- Overcomplicate things.  Stuff like audio isn't abstracted, so your BGE knowledge still applies.
+- Automatic multiplayer.  You'll still need general knowledge on how multiplayer games work.
 - Real games.  The lib is a work-in-progress, so expect bugs/slowness/security issues.
-- Work on MacOS (yet)
+- Work on MacOS or Win64 Blender builds (yet)
 
 
 
 #Running the examples
-**Blender 2.74+ is recommended, although it should theoretically work back to version 2.71**
+**Blender 2.75+ is recommended, support for older versions will soon be dropped**
 
 Clone the repository
 ```
@@ -30,3 +30,4 @@ Set up dependencies
 ```
 ./download_deps.sh
 ```
+Navigate to the examples folder and fire away!  I suggest running the server with the standalone player, as your system may want to hold onto the socket until the process is closed.  Need to look into that...
