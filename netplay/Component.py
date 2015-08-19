@@ -262,6 +262,7 @@ class ClientComponentSystem(ServerComponentSystem):
                 if c.input_changed_:
                     c._input_update()
 
+                c._client_update(dt)
                 c._update(dt)
 
             i += 1
