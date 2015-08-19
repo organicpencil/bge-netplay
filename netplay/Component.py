@@ -529,6 +529,9 @@ class Component:
             state = self.getInputState()
             self._packer.pack('_input', [state])
 
+    def _client_update(self, dt):
+        return
+
     def _update(self, dt):
         return
 
