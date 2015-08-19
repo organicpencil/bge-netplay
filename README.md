@@ -13,7 +13,7 @@ What it does:
 What it doesn't do:
 - Automatic multiplayer.  The developer must have intermediate Python skills.
 - Overcomplicate things.  Stuff like audio isn't abstracted, so your BGE knowledge still applies.
-- Compete.  This is intended for prototyping, so expect bugs/slowness/security issues.
+- Real games.  This lib is a work-in-progress, so expect bugs/slowness/security issues.
 - Work on MacOS (yet)
 
 
