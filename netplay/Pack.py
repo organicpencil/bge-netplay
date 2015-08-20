@@ -176,8 +176,8 @@ class DataProcessor:
 
             return data
 
-        def process(self, bdata):
-            self.callback(self.getData(bdata))
+    def process(self, bdata):
+        self.callback(self.getData(bdata))
 
 
 class Packer:

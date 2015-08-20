@@ -71,7 +71,9 @@ class Client:
                     if component is not None:
                         # Strip the IDs and process
                         data = bdata[4:]
-                        component._packer.process(p_id, data)
+                        #component._packer.process(p_id, data)
+                        dp = component._packer.getDataProcessor(p_id)
+                        dp.process(data)
 
                     else:
                         print (("Invalid component ID %d" % c_id))
