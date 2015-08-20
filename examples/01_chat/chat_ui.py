@@ -36,8 +36,9 @@ class Chat(bge_utils.System):
     def setTarget(self, comp):
         self.component = comp
 
-    def addChat(self, username, text):
-        self.textQueue.append("".join([username, ": ", text, "\n"]))
+    def addChat(self, text):
+        #self.textQueue.append("".join([username, ": ", text, "\n"]))
+        self.textQueue.append(text)
         self.textQueue.popleft()
         self.textbox.text = "".join(self.textQueue)
 
@@ -50,12 +51,7 @@ class Chat(bge_utils.System):
         if len(text):
             # Reset the input box
             self.inputbox.text = ""
-
-            if self.component.mgr.hostmode == 'server':
-                self.component.raw_public_chat([text])
-            else:
-                # Send it to the server for processing
-                self.component._packer.pack('raw_public_chat', [text])
+            self.component.call_rpc('input_public_chat', [text])
 
     def rename(self, widget):
         if self.component is None:
@@ -64,9 +60,7 @@ class Chat(bge_utils.System):
         text = self.inputbox.text
         if len(text):
             self.inputbox.text = ""
-
-            self.component.change_username([text])
-            self.component._packer.pack('change_username', [text])
+            self.component.call_rpc('input_change_username', [text])
 
     def update(self, dt):
         """A high-level method to be run every frame"""

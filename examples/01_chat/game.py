@@ -15,6 +15,9 @@ class Game:
         self.config['master']['hostname'] = ''
         self.config['master']['port'] = 64738
 
+        # For ensuring no duplicate names
+        self.nameList = []
+
         self.systems = {}
 
         ## Initialize core systems.  These will tic every logic frame.
@@ -37,13 +40,13 @@ class Game:
         # Hack to allow non-dedicated servers.  Doesn't really belong here.
         if mode == netplay.MODE_SERVER or mode == netplay.MODE_OFFLINE:
             c = self.systems['Component']
-            p = components.SPAWN_CHAT(c)
+            p = c.spawnComponent('ChatUser', username='nobody')
             self.systems['Input'].setTarget(p)
 
     def Server_onConnect(self, client_id):
         # Spawn a player component and give input permission
         c = self.systems['Component']
-        p = components.SPAWN_CHAT(c)
+        p = c.spawnComponent('ChatUser', username='nobody')
         p.givePermission(client_id)
 
     def Server_onDisconnect(self, client_id):

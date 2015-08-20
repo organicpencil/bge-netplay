@@ -3,71 +3,112 @@ import time
 from netplay import Component, Pack
 
 
-def SPAWN_CHAT(mgr):
-    comp = mgr.spawnComponent('Chat')
-    comp._attributes['username'] = 'unnamed'
-    comp._send_attributes()
-    return comp
+class ChatUser(Component):
+    def _register(self):
+        self.register_attribute('username', Pack.STRING, "")
 
+        self.register_rpc('input_change_username', self.input_changeUsername,
+                [Pack.STRING], replicate=False)
+        self.register_rpc('send_change_username', self.changeUsername,
+                [Pack.STRING], server_only=True)
 
-class Chat(Component):
-    def c_register(self):
-        # Attributes are used for spawning the object on other clients
-        self.registerAttribute('username', Pack.STRING)
+        self.register_rpc('input_public_chat', self.input_chatPublic,
+                [Pack.STRING], replicate=False)
+        self.register_rpc('send_public_chat', self.chatPublic,
+                [Pack.STRING], server_only=True)
 
-        self.registerRPC('change_username', self.change_username,
-                [Pack.STRING], reliable=True)
+        self.register_rpc('input_private_chat', self.input_chatPrivate,
+                [Pack.STRING, Pack.STRING], replicate=False, private=True)
+        self.register_rpc('send_private_chat', self.chatPrivate,
+                [Pack.STRING, Pack.STRING], private=True, server_only=True)
 
-        # Replicate false so only the server will process it
-        self.registerRPC('raw_public_chat', self.raw_public_chat,
-                [Pack.STRING], reliable=True, replicate=False)
+    def _setup(self):
+        username = self.getAttribute('username')
+        nameList = self.mgr.game.nameList
 
-        # Replicate false to ensure clients can't sent un-audited chat
-        self.registerRPC('public_chat', self.public_chat,
-                [Pack.STRING], reliable=False, replicate=False)
+        # Runs on both server and client... should be in sync
+        # Server has authority either way
+        if username in nameList:
+            new = ""
+            num = 1
+            while True:
+                new = "%s#%d" % (username, num)
+                if new in nameList:
+                    num += 1
+                else:
+                    username = new
+                    break
 
-    def c_setup(self):
-        # Runs when the object is spawned
-        #self.username = self.getAttribute('username')
-        return
+            self.setAttribute('username', new)
+            username = new
 
-    def c_refresh_attributes(self):
-        # You know, this is rather counter-productive.
-        # Would it not be better to access the attributes dict directly?
-        #self.setAttribute('username', self.playername)
-        return
+        nameList.append(username)
 
-    def c_destroy(self):
-        #self.ob.endObject()
-        None
+    def _destroy(self):
+        self.mgr.game.nameList.remove(self.getAttribute('username'))
 
-    def change_username(self, data):
-        print ("FIXME - need server side audit of name change")
-        newname = data[0]
-        oldname = self.getAttribute('username')
-        self.setAttribute('username', newname)
+    def input_changeUsername(self, data):
+        if self.mgr.hostmode == "server":
+            #data[0] = "Cleaned username"
+            new = data[0]
+            invalid = ['>', 'Server', 'server']
+            for inv in invalid:
+                if inv in new:
+                    self.call_rpc('send_private_chat',
+                            ['invalid name', 'Server'])
+                    return
 
-        message = "%s renamed to %s" % (oldname, newname)
-        self.mgr.game.systems['Input'].addChat("SYSTEM", message)
+            nameList = self.mgr.game.nameList
+            for name in nameList:
+                if name == new:
+                    self.call_rpc('send_private_chat',
+                            ['name in use', 'Server'])
+                    return
 
-    def raw_public_chat(self, data):
-        # Not replicated to other clients, so only the server processes
-        text = data[0]
-        ## Perform audits
-        # Ensure data is within size limit
-        text = text[:50]
+            self.call_rpc('send_change_username', data)
 
-        # Ship to clients
-        self._packer.pack('public_chat', [text])
+    def changeUsername(self, data):
+        old = self.getAttribute('username')
+        new = data[0]
 
-        if self.mgr.hostmode == 'server':
-            self.mgr.game.systems['Input'].addChat(self.getAttribute('username'), text)
+        self.setAttribute('username', new)
 
-    def public_chat(self, data):
-        if self.mgr.hostmode == 'server':
-            print ("WARNING - client attempting to send chat without audit...")
-            return
+        nameList = self.mgr.game.nameList
+        nameList.remove(old)
+        nameList.append(new)
 
-        self.mgr.game.systems['Input'].addChat(self.getAttribute('username'), data[0])
+        text = "".join([old, " renamed to ", new, "\n"])
+        self.mgr.game.systems['Input'].addChat(text)
 
+    def input_chatPublic(self, data):
+        # So when chat originates from the server this way it sends
+        # unnecessary data, but no harm is done.  Ideally people wont
+        # be playing from the server.  Server messages should interact
+        # directly with the send RPC
+        if self.mgr.hostmode == "server":
+            #data[0] = "Cleaned data"
+            self.call_rpc('send_public_chat', data)
 
+    def chatPublic(self, data):
+        username = self.getAttribute('username')
+        text = "".join([username, ": ", data[0], "\n"])
+        self.mgr.game.systems['Input'].addChat(text)
+
+    def input_chatPrivate(self, data):
+        if self.mgr.hostmode == "server":
+            other = None
+            for c in self.mgr.active_components_:
+                if c is not None:
+                    if c.getAttribute('username') == data[1]:
+                        other = c
+                        break
+
+            if other is not None:
+                #data[0] = "Cleaned private message"
+                sender = self.getAttribute('username')
+                other.call_rpc('send_private_chat', [data[0], sender])
+
+    def chatPrivate(self, data):
+        username = self.getAttribute('username')
+        text = "".join([data[1], " -> ", username, ": ", data[0], "\n"])
+        self.mgr.game.systems['Input'].addChat(text)
