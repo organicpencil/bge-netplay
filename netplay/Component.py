@@ -600,7 +600,7 @@ class DynamicComponent(Component):
                     Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
                     Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
                     Pack.FLOAT, Pack.FLOAT, Pack.FLOAT
-                ])
+                ], reliable=False)
 
     def _update_attributes(self):
         pos = self.ob.worldPosition
@@ -739,7 +739,7 @@ class RigidComponent(Component):
                     Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
                     Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
                     Pack.FLOAT, Pack.FLOAT, Pack.FLOAT
-                ])
+                ], reliable=False)
 
     def _update_attributes(self):
         pos = self.ob.worldPosition
