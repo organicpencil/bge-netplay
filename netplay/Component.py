@@ -383,7 +383,7 @@ class Component:
             reliable=True, replicate=True, private=False, server_only=False):
 
         self._packer.registerRPC(key, callback, datatypes,
-                reliable, replicate, private)
+                reliable, replicate, private, server_only)
 
     def call_rpc(self, key, datalist):
         self._packer.pack(key, datalist)
@@ -549,13 +549,16 @@ class MainComponent(Component):
         # posx, posy, posz
         # rotx, roty, rotz
         self._packer.registerRPC('addComponent', self.addComponent,
-            [Pack.USHORT, Pack.USHORT])
+            [Pack.USHORT, Pack.USHORT],
+            reliable=True, replicate=True,private=False, server_only=False)
 
         self._packer.registerRPC('freeComponent', self.freeComponent,
-            [Pack.USHORT])
+            [Pack.USHORT],
+            reliable=True, replicate=True, private=False, server_only=False)
 
         self._packer.registerRPC('setClientID', self.setClientID,
-            [Pack.INT])
+            [Pack.INT],
+            reliable=True, replicate=True, private=False, server_only=False)
 
         self._is_setup = True
 
