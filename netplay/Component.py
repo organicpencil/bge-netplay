@@ -380,10 +380,10 @@ class Component:
         self._is_setup = True
 
     def register_rpc(self, key, callback, datatypes,
-            reliable=True, replicate=True):
+            reliable=True, replicate=True, private=False, server_only=False):
 
         self._packer.registerRPC(key, callback, datatypes,
-                reliable, replicate)
+                reliable, replicate, private)
 
     def call_rpc(self, key, datalist):
         self._packer.pack(key, datalist)

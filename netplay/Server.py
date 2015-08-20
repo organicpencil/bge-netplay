@@ -183,7 +183,14 @@ class Server:
                         if component.hasPermission(peerID):
                             # Strip the IDs and process
                             data = bdata[4:]
-                            dp = component._packer.process(p_id, data)
+                            #dp = component._packer.process(p_id, data)
+                            dp = component._packer.getDataProcessor(p_id)
+
+                            if dp.server_only:
+                                print ("WARNING - client attempting to call server-only RPC")
+                                continue
+
+                            dp.process(data)
                             reliable = dp.reliable
 
                             if dp.replicate:
@@ -225,12 +232,22 @@ class Server:
                 d = bdata[1]
                 reliable = dp.reliable
 
-                for c in self.client_list:
-                    if c is not None:
-                        if reliable:
-                            c.reliable_data.append(d)
-                        else:
-                            c.unreliable_data.append(d)
+                if dp.private:
+                    for i in dp.component.client_permission_list_:
+                        c = self.client_list[i]
+                        if c is not None:
+                            if reliable:
+                                c.reliable_data.append(d)
+                            else:
+                                c.unreliable_data.append(d)
+
+                else:
+                    for c in self.client_list:
+                        if c is not None:
+                            if reliable:
+                                c.reliable_data.append(d)
+                            else:
+                                c.unreliable_data.append(d)
 
         for c in self.client_list:
             if c is not None:
