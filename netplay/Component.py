@@ -14,7 +14,7 @@ class ServerComponentSystem:
         self.game = game
         self.owner = game.owner
 
-        self.hostmode = 'server'
+        self.server = True
 
         # List of components ordered by ID (16 bit unsigned short)
         self.active_components_ = [None] * 65535
@@ -224,7 +224,7 @@ class ClientComponentSystem(ServerComponentSystem):
 
     def __init__(self, game):
         ServerComponentSystem.__init__(self, game)
-        self.hostmode = 'client'
+        self.server = False
         self.client_id = -1
 
     def spawnComponentByIndex(self, net_id, comp_index):
@@ -405,7 +405,7 @@ class Component:
     """
 
     def call_rpc(self, key, datalist):
-        if self.mgr.hostmode == 'server':
+        if self.mgr.server:
             p_id = self._packer.pack_index[key]
             dp = self._packer.pack_list[p_id]
             # Don't auto-call client RPCs on the server, let users define
@@ -516,7 +516,7 @@ class Component:
         else:
             print ("Giving permission")
             self.client_permission_list_.append(client_id)
-            if self.mgr.hostmode == 'server':
+            if self.mgr.server:
                 self._packer.pack('_permission', [client_id, 1])
             elif client_id == self.mgr.client_id:
                 self.mgr.game.systems['Input'].setTarget(self)
@@ -526,7 +526,7 @@ class Component:
         if client_id in self.client_permission_list_:
             print ("Taking permission")
             self.client_permission_list_.remove(client_id)
-            if self.mgr.hostmode == 'server':
+            if self.mgr.server:
                 self._packer.pack('_permission', [client_id, 0])
         else:
             print ("Did not have permission")
@@ -551,7 +551,7 @@ class Component:
 
     def _input_update(self):
         self.input_changed_ = False
-        if self.mgr.hostmode == 'client':
+        if not self.mgr.server:
             if self.mgr.game.systems['Input'].input_target is self:
                 state = self.getInputState()
                 self._packer.pack('_input', [state])
