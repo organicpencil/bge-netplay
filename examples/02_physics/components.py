@@ -13,7 +13,7 @@ class Dynamic_Cube(DynamicComponent):
 
     def _register(self):
         DynamicComponent._register(self)
-        self.register_rpc('idle', self.setIdle, Pack.UCHAR)
+        self.RPC_Client('idle', self.setIdle, Pack.UCHAR)
 
     def _server_update(self, dt):
         DynamicComponent._server_update(self, dt)
@@ -23,8 +23,10 @@ class Dynamic_Cube(DynamicComponent):
 
             if self._idle:
                 self.call_rpc('idle', [1])
+                self.setIdle([1])
             else:
                 self.call_rpc('idle', [0])
+                self.setIdle([0])
 
     def setIdle(self, data):
         if data[0] == 1:
@@ -41,7 +43,7 @@ class Rigid_Cube(RigidComponent):
 
     def _register(self):
         RigidComponent._register(self)
-        self.register_rpc('idle', self.setIdle, Pack.UCHAR)
+        self.RPC_Client('idle', self.setIdle, Pack.UCHAR)
 
     def _server_update(self, dt):
         RigidComponent._server_update(self, dt)
@@ -51,8 +53,10 @@ class Rigid_Cube(RigidComponent):
 
             if self._idle:
                 self.call_rpc('idle', [1])
+                self.setIdle([1])
             else:
                 self.call_rpc('idle', [0])
+                self.setIdle([0])
 
     def setIdle(self, data):
         if data[0] == 1:
@@ -78,10 +82,10 @@ class Player(DynamicComponent):
         self.register_attribute('t_x', Pack.FLOAT, 0.0)
         self.register_attribute('t_y', Pack.FLOAT, 0.0)
 
-        self.register_rpc('position', self.setTargetPosition,
+        self.RPC_Server('position', self.setTargetPosition,
                 [Pack.FLOAT, Pack.FLOAT])
 
-        self.register_rpc('idle', self.setIdle, Pack.UCHAR)
+        self.RPC_Client('idle', self.setIdle, Pack.UCHAR)
 
     def _setup(self):
         DynamicComponent._setup(self)
@@ -109,8 +113,10 @@ class Player(DynamicComponent):
 
             if self._idle:
                 self.call_rpc('idle', [1])
+                self.setIdle([1])
             else:
                 self.call_rpc('idle', [0])
+                self.setIdle([0])
 
     def setTargetPosition(self, data):
         self.target_position = [data[0], data[1], 1.0]
