@@ -186,11 +186,12 @@ class Server:
                             #dp = component._packer.process(p_id, data)
                             dp = component._packer.getDataProcessor(p_id)
 
-                            if dp.server_only:
-                                print ("WARNING - client attempting to call server-only RPC")
+                            if not dp.server:
+                                print ("WARNING - client calling client RPC")
                                 continue
 
                             dp.process(data)
+                            """  This logic is RPC-dependent
                             reliable = dp.reliable
 
                             if dp.replicate:
@@ -206,10 +207,12 @@ class Server:
                                             c.unreliable_data.append(bdata)
 
                                     k += 1
+                            """
                         else:
                             print ("Client does not have input permission")
                             print (("This is normal if button was changed when",
                                 "the client still thought it was alive"))
+                            print (component, peerID, bdata)
 
                     else:
                         print (("Invalid component ID %d" % c_id))
@@ -232,22 +235,12 @@ class Server:
                 d = bdata[1]
                 reliable = dp.reliable
 
-                if dp.private:
-                    for i in dp.component.client_permission_list_:
-                        c = self.client_list[i]
-                        if c is not None:
-                            if reliable:
-                                c.reliable_data.append(d)
-                            else:
-                                c.unreliable_data.append(d)
-
-                else:
-                    for c in self.client_list:
-                        if c is not None:
-                            if reliable:
-                                c.reliable_data.append(d)
-                            else:
-                                c.unreliable_data.append(d)
+                for c in self.client_list:
+                    if c is not None:
+                        if reliable:
+                            c.reliable_data.append(d)
+                        else:
+                            c.unreliable_data.append(d)
 
         for c in self.client_list:
             if c is not None:
@@ -285,6 +278,12 @@ class Client:
 
         self.reliable_data = []
         self.unreliable_data = []
+
+    def queue(self, bdata, reliable):
+        if reliable:
+            self.reliable_data.append(bdata)
+        else:
+            self.unreliable_data.append(bdata)
 
     def disconnect(self):
         # Forces disconnect, rather than waiting for timeout

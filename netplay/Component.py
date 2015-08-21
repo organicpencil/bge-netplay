@@ -314,14 +314,17 @@ class Component:
 
         # Register the initial attribute packer
         # Ideally replaced during c_register
-        self.register_rpc('_attributes', self._process_attributes, [Pack.UINT])
+        self.RPC_Client('_attributes', self._process_attributes, [Pack.UINT])
 
         # Register the input update packer
-        self.register_rpc('_input', self._process_input,
+        self.RPC_Server('_input', self._process_input,
+            [Pack.UCHAR])
+
+        self.RPC_Client('_recv_input', self._process_input,
             [Pack.UCHAR])
 
         # Register the permission packer
-        self.register_rpc('_permission', self._process_permission,
+        self.RPC_Client('_permission', self._process_permission,
             [Pack.USHORT, Pack.UCHAR])
 
         self._register()
@@ -337,13 +340,14 @@ class Component:
             datatype_list.append(d)
 
         # Rebuild attribute packer
-        self.register_rpc('_attributes', self._process_attributes, datatype_list)
+        self.RPC_Client('_attributes', self._process_attributes, datatype_list)
 
     def setAttribute(self, key, value):
         self._attributes[key] = value
 
     def getAttribute(self, key):
-        return self._attributes[key]
+        #return self._attributes[key]
+        return self._attributes.get(key, None)
 
     def _process_attributes(self, data):
         attrs = self._attribute_list
@@ -379,21 +383,46 @@ class Component:
         self._setup()
         self._is_setup = True
 
+    def RPC_Server(self, key, callback, datatypes, reliable=True):
+        server = True
+        self._packer.registerRPC(key, callback, datatypes,
+                server, reliable)
+
+    def RPC_Client(self, key, callback, datatypes, reliable=True):
+        server = False
+        self._packer.registerRPC(key, callback, datatypes,
+                server, reliable)
+
+    def getRPCData(self, key, data):
+        return self._packer.getRPCData(key, data)
+
+    """
     def register_rpc(self, key, callback, datatypes,
             reliable=True, replicate=True, private=False, server_only=False):
 
         self._packer.registerRPC(key, callback, datatypes,
                 reliable, replicate, private, server_only)
+    """
 
     def call_rpc(self, key, datalist):
-        self._packer.pack(key, datalist)
+        if self.mgr.hostmode == 'server':
+            p_id = self._packer.pack_index[key]
+            dp = self._packer.pack_list[p_id]
+            # Don't auto-call client RPCs on the server, let users define
+            # this behavior is necessary from the server RPC callback
+            if dp.server:
+                dp.callback(datalist)
+                return
 
+        self._packer.pack(key, datalist)
+        """
         # Apply now if called on the server
         # This potentially wastes CPU time, for example updating position
         if self.mgr.hostmode == 'server':
             p_id = self._packer.pack_index[key]
             dataprocessor = self._packer.pack_list[p_id]
             dataprocessor.callback(datalist)
+        """
 
     def register_input(self, input_name):
         # Run once per input key at component init
@@ -548,17 +577,15 @@ class MainComponent(Component):
         # new_net_id, new_net_id
         # posx, posy, posz
         # rotx, roty, rotz
-        self._packer.registerRPC('addComponent', self.addComponent,
-            [Pack.USHORT, Pack.USHORT],
-            reliable=True, replicate=True,private=False, server_only=False)
 
-        self._packer.registerRPC('freeComponent', self.freeComponent,
-            [Pack.USHORT],
-            reliable=True, replicate=True, private=False, server_only=False)
+        self.RPC_Client('addComponent', self.addComponent,
+                [Pack.USHORT, Pack.USHORT])
 
-        self._packer.registerRPC('setClientID', self.setClientID,
-            [Pack.INT],
-            reliable=True, replicate=True, private=False, server_only=False)
+        self.RPC_Client('freeComponent', self.freeComponent,
+                [Pack.USHORT])
+
+        self.RPC_Client('setClientID', self.setClientID,
+                [Pack.INT])
 
         self._is_setup = True
 
@@ -598,7 +625,7 @@ class DynamicComponent(Component):
         self.register_attribute('_linv_y', Pack.FLOAT, 0.0)
         self.register_attribute('_linv_z', Pack.FLOAT, 0.0)
 
-        self.register_rpc('_physics_state', self.updatePhysics,
+        self.RPC_Client('_physics_state', self.updatePhysics,
                 [
                     Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
                     Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
@@ -736,7 +763,7 @@ class RigidComponent(Component):
         self.register_attribute('_angv_y', Pack.FLOAT, 0.0)
         self.register_attribute('_angv_z', Pack.FLOAT, 0.0)
 
-        self.register_rpc('_physics_state', self.updatePhysics,
+        self.RPC_Client('_physics_state', self.updatePhysics,
                 [
                     Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
                     Pack.FLOAT, Pack.FLOAT, Pack.FLOAT,
