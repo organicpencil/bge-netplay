@@ -30,4 +30,4 @@ Set up dependencies
 ```
 Navigate to the examples folder and fire away!  I suggest running the server with the standalone player, as your system may want to hold onto the socket until the process is closed.  Need to look into that...
 
-**Only 01_chat and 02_physics are working**
+**05_minesweeper is not working**
