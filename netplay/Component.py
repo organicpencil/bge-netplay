@@ -140,7 +140,6 @@ class ServerComponentSystem:
 
         key = 'addComponent'
         packer = self.MainComponent._packer
-        main_id = self.MainComponent.net_id
         p_id = packer.pack_index[key]
         dataprocessor = packer.pack_list[p_id]
 
@@ -259,8 +258,8 @@ class ClientComponentSystem(ServerComponentSystem):
                     print (c)
                     continue
 
-                if c.input_changed_:
-                    c._input_update()
+                #if c.input_changed_:
+                #    c._input_update()
 
                 c._client_update(dt)
                 c._update(dt)
@@ -317,7 +316,7 @@ class Component:
         self.RPC_Client('_attributes', self._process_attributes, [Pack.UINT])
 
         # Register the input update packer
-        self.RPC_Server('_input', self._process_input,
+        self.RPC_Server('_send_input', self._process_input,
             [Pack.UCHAR])
 
         self.RPC_Client('_recv_input', self._process_input,
@@ -436,11 +435,15 @@ class Component:
             self.next_input_index_ -= 1
 
             if index == 16:  # Need to allocate 2 bytes
-                self.registerRPC('_input', self._process_input,
+                self.RPC_Client('_recv_input', self._process_input,
+                    [Pack.USHORT])
+                self.RPC_Server('_send_input', self._process_input,
                     [Pack.USHORT])
 
             elif index == 8:  # Need to allocate 4 bytes
-                self.registerRPC('_input', self._process_input,
+                self.RPC_Client('_recv_input', self._process_input,
+                    [Pack.UINT])
+                self.RPC_Server('_send_input', self._process_input,
                     [Pack.UINT])
 
             return True
@@ -477,6 +480,7 @@ class Component:
         return self.input_mask[index]
 
     def setInputState(self, input_state):
+        self.input_changed_ = True
         mask = bin(input_state)[2:].zfill(32)
         for i in range(0, len(mask)):
             self.input_mask[i] = int(mask[i])
@@ -551,13 +555,8 @@ class Component:
 
     def _input_update(self):
         self.input_changed_ = False
-        if not self.mgr.server:
-            if self.mgr.game.systems['Input'].input_target is self:
-                state = self.getInputState()
-                self._packer.pack('_input', [state])
-        else:
-            state = self.getInputState()
-            self._packer.pack('_input', [state])
+        state = self.getInputState()
+        self._packer.pack('_recv_input', [state])
 
     def _client_update(self, dt):
         return
