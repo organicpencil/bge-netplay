@@ -17,8 +17,13 @@ class InputSystem:
         self.cap1 = 1.4
         self.freeMouse = False
 
-    def setTarget(self, component):
+    def setTarget(self, comp):
+        if self.input_target is not None:
+            self.input_target.component.destroyLocal()
+            self.input_target = None
         # Must be a valid component or None
+
+        component = comp.createLocal()
         self.input_target = component
         bge.logic.getCurrentScene().active_camera = component.ob_camera
         bge.render.showMouse(0)
@@ -43,36 +48,38 @@ class InputSystem:
         ACTIVE = bge.logic.KX_INPUT_ACTIVE
 
         if events[bge.events.WKEY] == ACTIVE:
-            component.setInput('up_held', 1)
+            component.setInput('forward', 1)
         else:
-            component.setInput('up_held', 0)
+            component.setInput('forward', 0)
 
         if events[bge.events.SKEY] == ACTIVE:
-            component.setInput('down_held', 1)
+            component.setInput('back', 1)
         else:
-            component.setInput('down_held', 0)
+            component.setInput('back', 0)
 
         if events[bge.events.AKEY] == ACTIVE:
-            component.setInput('left_held', 1)
+            component.setInput('left', 1)
         else:
-            component.setInput('left_held', 0)
+            component.setInput('left', 0)
 
         if events[bge.events.DKEY] == ACTIVE:
-            component.setInput('right_held', 1)
+            component.setInput('right', 1)
         else:
-            component.setInput('right_held', 0)
+            component.setInput('right', 0)
 
         if events[bge.events.TABKEY] == JUST_ACTIVATED:
             self.toggleMouse()
 
         events = bge.logic.mouse.events
         if events[bge.events.LEFTMOUSE] == ACTIVE:
-            component.setInput('primary_held', 1)
+            component.setInput('primary', 1)
         else:
-            component.setInput('primary_held', 0)
+            component.setInput('primary', 0)
 
         if not self.freeMouse:
             self.mouseLook()
+
+        self.input_target.update(dt)
 
     def mouseLook(self):
         target = self.input_target
@@ -82,7 +89,6 @@ class InputSystem:
         if cam is None:
             print ("Can't do mouselook without a camera...")
             return
-
 
         width = bge.render.getWindowWidth()
         height = bge.render.getWindowHeight()
@@ -112,6 +118,9 @@ class InputSystem:
 
         mpos[0] = mpos[0] * width
         mpos[1] = mpos[1] * height
+
+        if int(mpos[0]) == centerX and int(mpos[1]) == centerY:
+            return
 
         w = centerX - mpos[0]
         h = centerY - mpos[1]
@@ -143,3 +152,7 @@ class InputSystem:
 
         # Reset mouse position
         bge.render.setMousePosition(centerX, centerY)
+
+        rot = cam.worldOrientation.to_euler()
+        # Send delta rotation
+        self.input_target.component.call_rpc('send_rotation', [rot[0], rot[2]])

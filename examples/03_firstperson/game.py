@@ -4,6 +4,7 @@ from userinput import InputSystem
 
 import components  # Must be imported for components to register
 
+
 class Game:
     def __init__(self, owner, mode=netplay.MODE_SERVER):
         self.owner = owner
@@ -33,12 +34,15 @@ class Game:
 
         self.last_time = time.monotonic()
 
+        # Playing on server no longer supported
+        """
         # Hack to allow non-dedicated servers.  Doesn't really belong here.
         if mode == netplay.MODE_SERVER or mode == netplay.MODE_OFFLINE:
             c = self.systems['Component']
             p = c.spawnComponent('Player', playername="ServerHost")
             #p = components.SPAWN_PLAYER(c, 'ServerHost')
             self.systems['Input'].setTarget(p)
+        """
 
     def Server_onConnect(self, client_id):
         # Spawn a player component and give input permission
