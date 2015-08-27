@@ -1,19 +1,18 @@
 # bge-netplay
-A Python library for multiplayer in Blender's game engine.
+A framework for building multiplayer games in Blender.
 
 Documentation and examples are lacking.  The API is subject to change.  *I wouldn't use it yet.*
 
 What it does:
-- Handle data transfer and connection management using ENet
-- Abstract things like input bitmasks and remote procedure calls
+- Abstracts ENet to manage connections
+- Things like input bitmasks and remote procedure calls
 - Builtin physics prefabs that kind of suck
 - (eventually) NAT punchthrough, relay hosting, LAN discovery
 
 What it doesn't do:
-- Automatic multiplayer.  You'll still need general knowledge on how multiplayer games work.
-- Real games.  The lib is a work-in-progress, so expect bugs/slowness/security issues.
-- Work on MacOS or Win64 Blender builds (yet)
-
+- Automatic multiplayer.  You still need to know how multiplayer works.
+- Real games.  The framework is very much work-in-progress, expect bugs/slowness/security issues.
+- Work on MacOS or Win64 (yet)
 
 
 #Running the examples
@@ -28,6 +27,6 @@ Set up dependencies
 ```
 ./download_deps.sh
 ```
-Navigate to the examples folder and fire away!  I suggest running the server with the standalone player, as your system may want to hold onto the socket until the process is closed.  Need to look into that...
+Navigate to the examples folder and fire away!  It's recommended to run the server with the standalone player, as your system may hold onto the socket while blender remains open.
 
 **05_minesweeper is not working**
