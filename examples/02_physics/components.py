@@ -2,21 +2,21 @@ import math
 import mathutils
 import time
 import bge
-from netplay import Component, DynamicComponent, RigidComponent, Pack
+from netplay import Component, MovingComponent, Pack
 
 
-class Dynamic_Cube(DynamicComponent):
+class Dynamic_Cube(MovingComponent):
     def __init__(self, mgr, net_id):
-        DynamicComponent.__init__(self, mgr, net_id)
+        MovingComponent.__init__(self, mgr, net_id)
         self.obj = 'dynamic_cube'
         self.was_idle = True
 
     def _register(self):
-        DynamicComponent._register(self)
+        MovingComponent._register(self)
         self.RPC_Client('idle', self.setIdle, Pack.UCHAR)
 
     def _server_update(self, dt):
-        DynamicComponent._server_update(self, dt)
+        MovingComponent._server_update(self, dt)
 
         if self._idle != self.was_idle:
             self.was_idle = self._idle
@@ -35,18 +35,18 @@ class Dynamic_Cube(DynamicComponent):
             self.ob.color = [0.5, 0.5, 1.0, 1.0]
 
 
-class Rigid_Cube(RigidComponent):
+class Rigid_Cube(MovingComponent):
     def __init__(self, mgr, net_id):
-        RigidComponent.__init__(self, mgr, net_id)
+        MovingComponent.__init__(self, mgr, net_id)
         self.obj = 'rigid_cube'
         self.was_idle = True
 
     def _register(self):
-        RigidComponent._register(self)
+        MovingComponent._register(self)
         self.RPC_Client('idle', self.setIdle, Pack.UCHAR)
 
     def _server_update(self, dt):
-        RigidComponent._server_update(self, dt)
+        MovingComponent._server_update(self, dt)
 
         if self._idle != self.was_idle:
             self.was_idle = self._idle
@@ -65,9 +65,9 @@ class Rigid_Cube(RigidComponent):
             self.ob.color = [1.0, 0.5, 0.5, 1.0]
 
 
-class Player(DynamicComponent):
+class Player(MovingComponent):
     def __init__(self, mgr, net_id):
-        DynamicComponent.__init__(self, mgr, net_id)
+        MovingComponent.__init__(self, mgr, net_id)
         self.obj = 'player'
         self.was_idle = True
 
@@ -78,7 +78,7 @@ class Player(DynamicComponent):
             self.ob.color = [0.5, 1.0, 0.5, 1.0]
 
     def _register(self):
-        DynamicComponent._register(self)
+        MovingComponent._register(self)
         self.register_attribute('t_x', Pack.FLOAT, 0.0)
         self.register_attribute('t_y', Pack.FLOAT, 0.0)
 
@@ -88,13 +88,13 @@ class Player(DynamicComponent):
         self.RPC_Client('idle', self.setIdle, Pack.UCHAR)
 
     def _setup(self):
-        DynamicComponent._setup(self)
+        MovingComponent._setup(self)
         attr = self.getAttribute
 
         self.target_position = [attr('t_x'), attr('t_y'), 1.0]
 
     def _update_attributes(self):
-        DynamicComponent._update_attributes(self)
+        MovingComponent._update_attributes(self)
         pos = self.target_position
         self.setAttribute('t_x', pos[0])
         self.setAttribute('t_y', pos[1])
@@ -106,7 +106,7 @@ class Player(DynamicComponent):
         else:
             self.ob.setLinearVelocity((0.0, 0.0, 0.0), False)
 
-        DynamicComponent._server_update(self, dt)
+        MovingComponent._server_update(self, dt)
 
         if self._idle != self.was_idle:
             self.was_idle = self._idle

@@ -2,12 +2,12 @@ import math
 import mathutils
 import time
 import bge
-from netplay import Component, RigidComponent, Pack
+from netplay import Component, MovingComponent, Pack
 
 
-class Crate(RigidComponent):
+class Crate(MovingComponent):
     def __init__(self, mgr, net_id):
-        RigidComponent.__init__(self, mgr, net_id)
+        MovingComponent.__init__(self, mgr, net_id)
         self.obj = 'crate'
 
 
@@ -64,6 +64,8 @@ class Player(Component):
         self.ob_camera_armature = ob.children['player_camera_armature']
         self.ob_camera = self.ob_camera_armature.children['player_camera']
         self.aiming = False
+
+        self.local_component = None
 
         self.update_timer = self.update_timer_max = 6
 
@@ -132,9 +134,22 @@ class Player(Component):
         self.ob.endObject()
 
     def _client_update(self, dt):
-        npos = self.new_pos
-        diff = npos - self.ob.worldPosition
-        self.ob.worldPosition += diff * 0.1
+        if self.local_component is not None:
+            # Don't interpolate the simulated player, screws up prediction
+            self.ob.worldPosition = self.new_pos
+
+            ping = self.mgr.game.systems['Client'].getPing()
+            dist = self.ob.getDistanceTo(self.local_component.ob)
+            speed = 6.0
+            expected = speed * (ping / 200.0)
+
+            if dist > expected:
+                print ("Re-syncing local position")
+                self.local_component.ob.worldPosition = self.new_pos
+        else:
+            npos = self.new_pos
+            diff = npos - self.ob.worldPosition
+            self.ob.worldPosition += diff * 0.1
 
     def _server_update(self, dt):
         self.update_timer -= 1
@@ -210,6 +225,8 @@ class LocalPlayer(Player):
         self.component = component
         Player.__init__(self, component.mgr, component.net_id)
         self.setup()
+
+        print ("FIXME - correct predicted position when too far out of sync")
 
     def setup(self):
         # Runs when the object is spawned
