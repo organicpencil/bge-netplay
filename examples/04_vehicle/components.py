@@ -165,6 +165,7 @@ class Car(MovingComponent):
                 constraint.setSteeringValue(steer, i)
     """
 
+    """
     def _client_update(self, dt):
         MovingComponent._client_update(self, dt)
         getInput = self.getInput
@@ -186,9 +187,9 @@ class Car(MovingComponent):
                 constraint.setSteeringValue(steer * 0.3, i)
 
             constraint.applyBraking(brake * 100.0, i)
+    """
 
-    def _server_update(self, dt):
-        MovingComponent._server_update(self, dt)
+    def _update(self, dt):
         getInput = self.getInput
 
         power = 0.0
