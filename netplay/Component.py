@@ -699,12 +699,12 @@ class MovingComponent(Component):
             rot = ob.worldOrientation.to_euler()
 
             update = False
-            if (pos - self._last_pos).length > 0.5:
+            if (pos - self._last_pos).length > 0.01:
                 update = True
             else:
                 lastrot = self._last_rot
                 for i in range(0, 3):
-                    if abs(rot[i] - lastrot[i]) > 0.1:
+                    if abs(rot[i] - lastrot[i]) > 0.01:
                         update = True
                         break
 
