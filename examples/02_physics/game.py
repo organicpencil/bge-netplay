@@ -40,22 +40,20 @@ class Game:
         if mode == netplay.MODE_SERVER or mode == netplay.MODE_OFFLINE:
             c = self.systems['Component']
 
-            p = c.spawnComponent('Player', _pos_z=1.0)
+            p = c.spawnComponent('Player', _pos_y = -5.0, _pos_z=1.0)
             self.systems['Input'].setTarget(p)
 
-            for i in range(0, 20):
-                x = random.uniform(-15.0, 15.0)
-                y = random.uniform(-15.0, 15.0)
-                c.spawnComponent('Dynamic_Cube', _pos_x=x, _pos_y=y, _pos_z=10.0)
-
-                x = random.uniform(-15.0, 15.0)
-                y = random.uniform(-15.0, 15.0)
-                c.spawnComponent('Rigid_Cube', _pos_x=x, _pos_y=y, _pos_z=10.0)
+            for z in range(0, 5):
+                y = 0.0
+                z = (z * 2) + 1
+                for x in range(0, 10):
+                    x *= 2
+                    c.spawnComponent('Rigid_Cube', _pos_x=x, _pos_y=y, _pos_z=z)
 
     def Server_onConnect(self, client_id):
         # Spawn a player component and give input permission
         c = self.systems['Component']
-        p = c.spawnComponent('Player', _pos_z=1.0)
+        p = c.spawnComponent('Player', _pos_y = -5.0, _pos_z=1.0)
         p.givePermission(client_id)
 
     def Server_onDisconnect(self, client_id):

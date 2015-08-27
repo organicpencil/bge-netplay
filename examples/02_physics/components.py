@@ -5,36 +5,6 @@ import bge
 from netplay import Component, MovingComponent, Pack
 
 
-class Dynamic_Cube(MovingComponent):
-    def __init__(self, mgr, net_id):
-        MovingComponent.__init__(self, mgr, net_id)
-        self.obj = 'dynamic_cube'
-        self.was_idle = True
-
-    def _register(self):
-        MovingComponent._register(self)
-        self.RPC_Client('idle', self.setIdle, Pack.UCHAR)
-
-    def _server_update(self, dt):
-        MovingComponent._server_update(self, dt)
-
-        if self._idle != self.was_idle:
-            self.was_idle = self._idle
-
-            if self._idle:
-                self.call_rpc('idle', [1])
-                self.setIdle([1])
-            else:
-                self.call_rpc('idle', [0])
-                self.setIdle([0])
-
-    def setIdle(self, data):
-        if data[0] == 1:
-            self.ob.color = [0.0, 0.0, 1.0, 1.0]
-        else:
-            self.ob.color = [0.5, 0.5, 1.0, 1.0]
-
-
 class Rigid_Cube(MovingComponent):
     def __init__(self, mgr, net_id):
         MovingComponent.__init__(self, mgr, net_id)
@@ -60,9 +30,9 @@ class Rigid_Cube(MovingComponent):
 
     def setIdle(self, data):
         if data[0] == 1:
-            self.ob.color = [1.0, 0.0, 0.0, 1.0]
+            self.ob.color = [0.2, 0.2, 0.2, 1.0]
         else:
-            self.ob.color = [1.0, 0.5, 0.5, 1.0]
+            self.ob.color = [0.4, 0.4, 0.4, 1.0]
 
 
 class Player(MovingComponent):
