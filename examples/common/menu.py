@@ -3,11 +3,33 @@ import bgui
 from bgui import bge_utils
 
 
+VERSION_MIN = (2, 76, 0)
+VERSION_STRING = "2.76"
+
+
+def CheckVersion():
+    try:
+        bge.app.version
+    except:
+        return False
+
+    if VERSION_MIN > bge.app.version:
+        return False
+
+    return True
+
+
 class Menu(bge_utils.System):
 
     def __init__(self, owner):
         bge_utils.System.__init__(self, theme='theme')
         self.owner = owner
+
+        if not CheckVersion():
+            bgui.Label(self, text="Unsupported version of Blender.  Download %s or newer." % VERSION_STRING,
+                    pt_size=36,
+                    options=bgui.BGUI_CENTERX | bgui.BGUI_CENTERY)
+            return
 
         self.frame = bgui.Widget(self, aspect=1.0, size=[0.9, 0.9],
             pos=[0.05, 0.05])
