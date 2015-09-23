@@ -16,7 +16,7 @@ What it doesn't do:
 
 
 #Running the examples
-**Blender 2.75+ is recommended, support for older versions will soon be dropped**
+**Blender 2.6 or newer is required**
 
 Clone the repository
 ```

@@ -646,7 +646,7 @@ class MovingComponent(Component):
         attr = self.getAttribute
         own = self.mgr.owner
 
-        self.ob = ob = own.scene.addObject(self.obj, own)
+        self.ob = ob = own.scene.addObject(self.obj)
 
         ob.worldPosition = [attr('_pos_x'), attr('_pos_y'), attr('_pos_z')]
         ob.worldOrientation = mathutils.Euler((attr('_rot_x'), attr('_rot_y'),
