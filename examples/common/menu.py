@@ -38,9 +38,6 @@ class Menu(bge_utils.System):
             pos=[0.0, 0.9])
         server.on_click = self.start_server
 
-        offline = bgui.FrameButton(self.frame, text="Start Offline", size=[0.4, 0.1],
-            pos=[0.0, 0.65])
-        offline.on_click = self.start_offline
 
         bgui.Label(self.frame, text="IP:", pos=[0.0, 0.42], sub_theme='Large')
         self.ip_input = bgui.TextInput(self.frame, text="127.0.0.1", size=[0.4, 0.1],
@@ -55,11 +52,6 @@ class Menu(bge_utils.System):
 
     def start_server(self, widget):
         self.owner['mode'] = 0
-        self.owner.state = 2
-        self.owner.scene.post_draw = []
-
-    def start_offline(self, widget):
-        self.owner['mode'] = 1
         self.owner.state = 2
         self.owner.scene.post_draw = []
 

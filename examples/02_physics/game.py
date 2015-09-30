@@ -31,18 +31,14 @@ class Game:
         else:
             self.systems['Client'] = netplay.Client(self, server_ip=owner['ip'])
             self.systems['Component'] = netplay.ClientComponentSystem(self)
-
-        self.systems['Input'] = InputSystem(self)
+        	self.systems['Input'] = InputSystem(self)
 
         self.last_time = time.monotonic()
 
         # Spawn things @ server start
-        if mode == netplay.MODE_SERVER or mode == netplay.MODE_OFFLINE:
+        if mode == netplay.MODE_SERVER:
             c = self.systems['Component']
-
-            p = c.spawnComponent('Player', _pos_y = -5.0, _pos_z=1.0)
-            self.systems['Input'].setTarget(p)
-
+            
             for z in range(0, 5):
                 y = 0.0
                 z = (z * 2) + 1

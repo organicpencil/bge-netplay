@@ -32,16 +32,9 @@ class Game:
         else:
             self.systems['Client'] = netplay.Client(self, server_ip=owner['ip'])
             self.systems['Component'] = netplay.ClientComponentSystem(self)
-
-        self.systems['Input'] = Chat(self)
+        	self.systems['Input'] = Chat(self)
 
         self.last_time = time.monotonic()
-
-        # Hack to allow non-dedicated servers.  Doesn't really belong here.
-        if mode == netplay.MODE_SERVER or mode == netplay.MODE_OFFLINE:
-            c = self.systems['Component']
-            p = c.spawnComponent('ChatUser', username='nobody')
-            self.systems['Input'].setTarget(p)
 
     def Server_onConnect(self, client_id):
         # Spawn a player component and give input permission

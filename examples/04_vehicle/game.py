@@ -31,28 +31,9 @@ class Game:
         else:
             self.systems['Client'] = netplay.Client(self, server_ip=owner['ip'])
             self.systems['Component'] = netplay.ClientComponentSystem(self)
-
-        self.systems['Input'] = InputSystem(self)
+        	self.systems['Input'] = InputSystem(self)
 
         self.last_time = time.monotonic()
-
-        # Spawn things @ server start
-        if mode == netplay.MODE_SERVER or mode == netplay.MODE_OFFLINE:
-            """
-            c = self.systems['Component']
-
-            p = c.spawnComponent('Player', _pos_z=1.0)
-            self.systems['Input'].setTarget(p)
-
-            for i in range(0, 20):
-                x = random.uniform(-15.0, 15.0)
-                y = random.uniform(-15.0, 15.0)
-                c.spawnComponent('Dynamic_Cube', _pos_x=x, _pos_y=y, _pos_z=10.0)
-
-                x = random.uniform(-15.0, 15.0)
-                y = random.uniform(-15.0, 15.0)
-                c.spawnComponent('Rigid_Cube', _pos_x=x, _pos_y=y, _pos_z=10.0)
-            """
 
     def Server_onConnect(self, client_id):
         # Spawn a player component and give input permission

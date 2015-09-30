@@ -7,7 +7,7 @@ import threading
 import json
 import time
 
-from . import constants, Pack
+from . import Pack
 
 
 class ServerHeartbeatThread(threading.Thread):
@@ -49,11 +49,9 @@ class ServerHeartbeatThread(threading.Thread):
 
 class Server:
 
-    def __init__(self, game, mode=constants.MODE_OFFLINE,
+    def __init__(self, game,
             servername='', mapname='', playername='',
             maxclients=10, interface='', port=54303):
-
-        self.mode = mode
 
         self.game = game
         self.owner = game.owner
@@ -76,10 +74,7 @@ class Server:
         # It should temporarily be moved to a separate thread during
         # blocking operations
 
-        if mode == constants.MODE_OFFLINE:
-            self.network = None
-            print ("Playing offline")
-        elif enet is None:
+        if enet is None:
             # No network support - a compatible enet library was not supplied
             self.network = None
             print ("No compatible enet library found.  Network play disabled.")

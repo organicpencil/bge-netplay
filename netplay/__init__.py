@@ -4,4 +4,4 @@ from .Component import ServerComponentSystem, ClientComponentSystem, Component
 from .Component import MovingComponent
 from . import Pack
 
-from .constants import MODE_SERVER, MODE_OFFLINE, MODE_CLIENT
+from .constants import MODE_SERVER, MODE_CLIENT
