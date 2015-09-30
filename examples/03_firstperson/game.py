@@ -19,7 +19,7 @@ class Game:
 
         ## Initialize core systems.  These will tic every logic frame.
         if mode == netplay.MODE_SERVER:
-            self.systems['Server'] = netplay.Server(self, mode=mode)
+            self.systems['Server'] = netplay.Server(self)
             self.systems['Component'] = netplay.ServerComponentSystem(self)
 
             server = self.systems['Server']
