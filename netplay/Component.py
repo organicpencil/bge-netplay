@@ -382,12 +382,12 @@ class Component:
         self._setup()
         self._is_setup = True
 
-    def RPC_Server(self, key, callback, datatypes, reliable=True):
+    def RPC_Server(self, key, callback, datatypes=[], reliable=True):
         server = True
         self._packer.registerRPC(key, callback, datatypes,
                 server, reliable)
 
-    def RPC_Client(self, key, callback, datatypes, reliable=True):
+    def RPC_Client(self, key, callback, datatypes=[], reliable=True):
         server = False
         self._packer.registerRPC(key, callback, datatypes,
                 server, reliable)
@@ -403,15 +403,19 @@ class Component:
                 reliable, replicate, private, server_only)
     """
 
-    def call_rpc(self, key, datalist):
+    def call_rpc(self, key, datalist=[]):
+        """
         if self.mgr.server:
             p_id = self._packer.pack_index[key]
             dp = self._packer.pack_list[p_id]
             # Don't auto-call client RPCs on the server, let users define
             # this behavior is necessary from the server RPC callback
-            if dp.server:
-                dp.callback(datalist)
-                return
+            #if dp.server:
+            #    dp.callback(datalist)
+            #    return
+            # Don't auto-call *anything* locally.  Users should call the
+            # the function directly
+        """
 
         self._packer.pack(key, datalist)
         """
