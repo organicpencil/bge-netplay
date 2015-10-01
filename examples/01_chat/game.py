@@ -21,6 +21,7 @@ class Game:
         self.systems = {}
 
         ## Initialize core systems.  These will tic every logic frame.
+        self.systems['Input'] = Chat(self)
         if mode == netplay.MODE_SERVER:
             self.systems['Server'] = netplay.Server(self)
             self.systems['Component'] = netplay.ServerComponentSystem(self)
@@ -32,7 +33,6 @@ class Game:
         else:
             self.systems['Client'] = netplay.Client(self, server_ip=owner['ip'])
             self.systems['Component'] = netplay.ClientComponentSystem(self)
-        	self.systems['Input'] = Chat(self)
 
         self.last_time = time.monotonic()
 

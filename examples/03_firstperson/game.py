@@ -29,7 +29,7 @@ class Game:
         else:
             self.systems['Client'] = netplay.Client(self, server_ip=owner['ip'])
             self.systems['Component'] = netplay.ClientComponentSystem(self)
-        	self.systems['Input'] = InputSystem(self)
+            self.systems['Input'] = InputSystem(self)
 
         self.last_time = time.monotonic()
 
