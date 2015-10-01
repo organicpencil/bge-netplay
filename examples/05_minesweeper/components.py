@@ -157,10 +157,11 @@ class Player(Component):
         if self.holding:
             self.holding = False
 
-            x, y = self.current_block
-            board = self.mgr.game.board
-            block = board.grid[x][y]
-            board.open(block)
+            if not self.no_hover:
+                x, y = self.current_block
+                board = self.mgr.game.board
+                block = board.grid[x][y]
+                board.open(block)
 
         else:
             print ("Held state out of sync")
@@ -226,7 +227,7 @@ class Block:
     def addHold(self):
         self.holding += 1
 
-        if self.holding == 1 and not self.isFlagged and not self.isOpen:
+        if self.holding > 0 and not self.isFlagged and not self.isOpen:
             self.ob.replaceMesh('Block_pressed')
 
     def removeHold(self):
@@ -437,11 +438,14 @@ class Board(Component):
                                     block.adjacent += 1
 
     def open(self, block):
+        # Substract holds so it's updated even when flagged
+        block.holding -= 1
+
         if block.isOpen or block.isFlagged:
             return
 
         # Remove first remove all holds
-        block.holds = 0
+        block.holding = 0
 
         block.reveal()
         block.isOpen = True

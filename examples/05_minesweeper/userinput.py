@@ -68,7 +68,7 @@ class InputSystem:
                 block = other['BLOCK']
 
                 coords = [block.x, block.y]
-                if component.current_block != coords:
+                if component.current_block != coords or component.no_hover:
                     component.set_block(coords, local=True)
                     component.call_rpc('set_block', coords)
             else:
