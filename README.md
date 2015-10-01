@@ -28,5 +28,3 @@ Set up dependencies
 ./download_deps.sh
 ```
 Navigate to the examples folder and fire away!  It's recommended to run the server with the standalone player, as your system may hold onto the socket while blender remains open.
-
-**05_minesweeper is not working**

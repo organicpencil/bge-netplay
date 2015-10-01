@@ -14,7 +14,7 @@ MINES = 10
 
 
 class Game:
-    def __init__(self, owner, mode=netplay.MODE_OFFLINE):
+    def __init__(self, owner, mode=netplay.MODE_SERVER):
         self.owner = owner
 
         ## TODO - load from disk
@@ -30,8 +30,8 @@ class Game:
         self.board = None  # We'll store the game board here
 
         ## Initialize core systems.  These will tic every frame
-        if mode == netplay.MODE_SERVER or mode == netplay.MODE_OFFLINE:
-            self.systems['Server'] = netplay.Server(self, mode=mode)
+        if mode == netplay.MODE_SERVER:
+            self.systems['Server'] = netplay.Server(self)
             self.systems['Component'] = netplay.ServerComponentSystem(self)
 
             serversystem = self.systems['Server']
@@ -57,13 +57,7 @@ class Game:
                     server_ip=owner['ip'])
             self.systems['Component'] = netplay.ClientComponentSystem(self)
 
-        self.systems['Input'] = InputSystem(self)
-
-        if mode == netplay.MODE_SERVER or mode == netplay.MODE_OFFLINE:
-            cmgr = self.systems['Component']
-            p = cmgr.spawnComponent('Player', playername='TheHost')
-            #p = components.SPAWN_PLAYER(c, 'TheHost')
-            self.systems['Input'].setTarget(p)
+            self.systems['Input'] = InputSystem(self)
 
         ## Used to determine frame time delta.
         self.last_time = time.monotonic()
@@ -126,7 +120,7 @@ def resetButton(cont):
         owner = cont.owner
         game = owner.get('Game', None)
         if game is not None:
-            if game.systems['Component'].hostmode == 'server':
+            if game.systems['Component'].server:
                 game.reset()
 
 

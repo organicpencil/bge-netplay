@@ -69,17 +69,31 @@ class InputSystem:
 
                 coords = [block.x, block.y]
                 if component.current_block != coords:
-                    component.setBlock(coords)
-                    component.call_rpc('set_current_block', coords)
+                    component.set_block(coords, local=True)
+                    component.call_rpc('set_block', coords)
             else:
-                return
+                if not component.no_hover:
+                    component.no_block(local=True)
+                    component.call_rpc('no_block')
         else:
             return
 
         if events[iDict['primary']] == JUST_ACTIVATED:
-            component.setInput('primary_pressed', 1)
+            #component.setInput('primary_pressed', 1)
+            component.press(local=True)
+            component.call_rpc('press')
         elif events[iDict['primary']] == JUST_RELEASED:
-            component.setInput('primary_released', 1)
+            #component.setInput('primary_released', 1)
+            component.release(local=True)
+            component.call_rpc('release')
 
         if events[iDict['secondary']] == JUST_ACTIVATED:
-            component.setInput('secondary_pressed', 1)
+            #component.setInput('secondary_pressed', 1)
+            if not component.no_hover:
+                block = component.getCurrentBlock()
+                if block.isFlagged:
+                    component.unflag(local=True)
+                    component.call_rpc('unflag')
+                else:
+                    component.flag(local=True)
+                    component.call_rpc('flag')

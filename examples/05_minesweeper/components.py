@@ -15,9 +15,11 @@ class Player(Component):
         # Attributes are used for spawning the object on clients
         # These should ONLY be defined once and in c_register
         self.register_attribute('playername', Pack.STRING, 'unnamed')
-        self.register_attribute('current_block_x', Pack.USHORT, 0)
-        self.register_attribute('current_block_y', Pack.USHORT, 0)
+        self.register_attribute('no_hover', Pack.UCHAR, 1)
+        self.register_attribute('block_x', Pack.USHORT, 0)
+        self.register_attribute('block_y', Pack.USHORT, 0)
 
+        """
         # RPCs are called during the game
         self.register_rpc('set_current_block', self.setBlock,
                 [Pack.USHORT, Pack.USHORT])
@@ -30,21 +32,40 @@ class Player(Component):
         # You can accomplish the same with RPCs if desired.
         # In fact inputs are just an abstraction to this built-in RPC:
         #self.registerRPC('_input', self._process_input, [Pack.UINT])
+        """
+        self.RPC_Server('set_block', self.set_block,
+                [Pack.USHORT, Pack.USHORT])
+        self.RPC_Server('no_block', self.no_block)
+        self.RPC_Server('press', self.press)
+        self.RPC_Server('release', self.release)
+        self.RPC_Server('flag', self.flag)
+        self.RPC_Server('unflag', self.unflag)
+
+        self.RPC_Client('client_set_block', self.set_block,
+                [Pack.USHORT, Pack.USHORT])
+        self.RPC_Server('client_no_block', self.no_block)
+        self.RPC_Client('client_press', self.press)
+        self.RPC_Client('client_release', self.release)
+        self.RPC_Client('client_flag', self.flag)
+        self.RPC_Client('client_unflag', self.unflag)
 
     def _update_attributes(self):
         # Runs on server when new clients need information
         # Only need to update attributes that could have changed
-        self.setAttribute('current_block_x', self.current_block[0])
-        self.setAttribute('current_block_y', self.current_block[1])
+        self.setAttribute('no_hover', self.no_hover)
+        self.setAttribute('block_x', self.current_block[0])
+        self.setAttribute('block_y', self.current_block[1])
 
     def _setup(self):
         # Runs when the objected is spawned on the client
 
         # Access attributes as needed.
         self.playername = self._attributes['playername']
+
+        self.no_hover = self.getAttribute('block_x')
         self.current_block = [
-                self.getAttribute('current_block_x'),
-                self.getAttribute('current_block_y')
+                self.getAttribute('block_x'),
+                self.getAttribute('block_y')
                 ]
 
         # True when mouse is held
@@ -52,55 +73,125 @@ class Player(Component):
 
     def _destroy(self):
         # Unhover / hold blocks
-        self.setBlock([0, 0])
+        #self.setBlock([0, 0])
+        self.no_block()
 
-    def setBlock(self, data):
+    def getCurrentBlock(self):
+        if self.no_hover:
+            return None
+
+        x = self.current_block[0]
+        y = self.current_block[1]
+
+        return self.mgr.game.board.grid[x][y]
+
+    def isLocal(self, local):
+        if not self.mgr.server:
+            if self.mgr.game.systems['Input'].input_target is self and not local:
+                return True
+
+        return False
+
+    def set_block(self, data, local=False):
+        if self.isLocal(local):
+            return
+
         x = data[0]
         y = data[1]
 
-        old_x = self.current_block[0]
-        old_y = self.current_block[1]
-
         board = self.mgr.game.board
 
-        oldblock = board.grid[old_x][old_y]
-        if self.holding:
-            oldblock.removeHold()
-        oldblock.removeHover()
+        # Reset old block if applicable
+        self.no_block(local=local)
+        self.no_hover = 0
 
+        self.current_block = [x, y]
         newblock = board.grid[x][y]
         newblock.addHover()
         if self.holding:
             newblock.addHold()
-        self.current_block[0] = x
-        self.current_block[1] = y
 
-    def _update(self, dt):
-        x = self.current_block[0]
-        y = self.current_block[1]
-        board = self.mgr.game.board
-        if len(board.grid) == 0:
-            # Board not yet initialized
+        if self.mgr.server:
+            self.call_rpc('client_set_block', [x, y])
+
+    def no_block(self, data=None, local=False):
+        if self.isLocal(local):
             return
 
-        block = board.grid[x][y]
+        board = self.mgr.game.board
 
-        getInput = self.getInput
+        if not self.no_hover:
+            old_x = self.current_block[0]
+            old_y = self.current_block[1]
 
-        if getInput('primary_pressed'):
-            self.resetInput('primary_pressed')
+            oldblock = board.grid[old_x][old_y]
+            if self.holding:
+                oldblock.removeHold()
+            oldblock.removeHover()
+
+            self.no_hover = 1
+
+        if self.mgr.server:
+            self.call_rpc('client_no_block')
+
+    def press(self, data=None, local=False):
+        if self.isLocal(local):
+            return
+
+        if not self.holding:
             self.holding = True
-            block.addHold()
 
-        if getInput('primary_released'):
-            self.resetInput('primary_released')
+            x, y = self.current_block
+            board = self.mgr.game.board
+            board.grid[x][y].addHold()
+        else:
+            print ("Held state out of sync")
+
+        if self.mgr.server:
+            self.call_rpc('client_press')
+
+    def release(self, data=None, local=False):
+        if self.isLocal(local):
+            return
+
+        if self.holding:
             self.holding = False
-            block.removeHold()
+
+            x, y = self.current_block
+            board = self.mgr.game.board
+            block = board.grid[x][y]
             board.open(block)
 
-        if getInput('secondary_pressed'):
-            self.resetInput('secondary_pressed')
-            block.toggleFlag()
+        else:
+            print ("Held state out of sync")
+
+        if self.mgr.server:
+            self.call_rpc('client_release')
+
+    def flag(self, data=None, local=False):
+        if self.isLocal(local):
+            return
+
+        x, y = self.current_block
+        board = self.mgr.game.board
+        board.grid[x][y].setFlag()
+
+        if self.mgr.server:
+            self.call_rpc('client_flag')
+
+    def unflag(self, data=None, local=False):
+        if self.isLocal(local):
+            return
+
+        x, y = self.current_block
+        board = self.mgr.game.board
+        board.grid[x][y].removeFlag()
+
+        if self.mgr.server:
+            self.call_rpc('client_unflag')
+
+    def _update(self, dt):
+        None
 
 
 class Block:
@@ -147,7 +238,12 @@ class Block:
             else:
                 self.ob.replaceMesh('Block')
 
-    def toggleFlag(self):
+    def setFlag(self):
+        if not self.isFlagged:
+            self.isFlagged = True
+            self.ob.replaceMesh('Block_locked')
+
+    def removeFlag(self):
         if self.isFlagged:
             self.isFlagged = False
 
@@ -157,10 +253,6 @@ class Block:
                 self.ob.replaceMesh('Block_hover')
             else:
                 self.ob.replaceMesh('Block')
-
-        else:
-            self.isFlagged = True
-            self.ob.replaceMesh('Block_locked')
 
     def reveal(self):
         new = self.ob.scene.addObject('Uncovered', self.ob)
@@ -348,6 +440,9 @@ class Board(Component):
         if block.isOpen or block.isFlagged:
             return
 
+        # Remove first remove all holds
+        block.holds = 0
+
         block.reveal()
         block.isOpen = True
 
@@ -355,8 +450,9 @@ class Board(Component):
             timer = self.mgr.game.timer
             timer.onStop([timer.time, 1])
             # Sync time with clients
-            if self.mgr.hostmode == 'server':
-                timer._packer.pack('stop', [timer.time, timer.stopped])
+            if self.mgr.server:
+                #timer._packer.pack('stop', [timer.time, timer.stopped])
+                timer.call_rpc('client_stop', [timer.time, timer.stopped])
 
             return
 
@@ -366,8 +462,9 @@ class Board(Component):
                 timer = self.mgr.game.timer
                 timer.onStop([timer.time, 2])
                 # Sync time with clients
-                if self.mgr.hostmode == 'server':
-                    timer._packer.pack('stop', [timer.time, timer.stopped])
+                if self.mgr.server:
+                    #timer._packer.pack('stop', [timer.time, timer.stopped])
+                    timer.call_rpc('client_stop', [timer.time, timer.stopped])
 
                 return
 
@@ -400,7 +497,7 @@ class Timer(Component):
         self.register_attribute('time', Pack.FLOAT, 0.0)
         self.register_attribute('stopped', Pack.CHAR, 0)
 
-        self.register_rpc('stop', self.onStop, [Pack.FLOAT, Pack.CHAR])
+        self.RPC_Client('client_stop', self.onStop, [Pack.FLOAT, Pack.CHAR])
 
     def _update_attributes(self):
         self.setAttribute('time', self.time)
