@@ -1,3 +1,6 @@
+# This is abandonware (14-March-2016)
+One of these days I'll replace it with something better (maybe)
+
 # bge-netplay
 A framework for building multiplayer games in Blender.
 
