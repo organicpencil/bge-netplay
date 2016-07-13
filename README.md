@@ -13,8 +13,6 @@ A client-server framework for multiplayer games in Blender.  Only 64 bit Linux i
 
 # Running the examples
 
-**Unofficial portable Linux builds can be found here** - https://pqftgs.net/downloads/blender/
-
 Clone the repository
 ```bash
 git clone https://github.com/pqftgs/bge-netplay.git
@@ -32,7 +30,7 @@ Navigate to the examples folder and fire away!  It's recommended to close blende
 
 
 # 3rd party stuff
-enet - https://github.com/lsalzman/enet
-pyenet - https://github.com/aresch/pyenet
-bitstring - https://github.com/scott-griffiths/bitstring
-python-serializer - https://github.com/pqftgs/python-serializer
+- enet - https://github.com/lsalzman/enet
+- pyenet - https://github.com/aresch/pyenet
+- bitstring - https://github.com/scott-griffiths/bitstring
+- python-serializer - https://github.com/pqftgs/python-serializer
