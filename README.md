@@ -34,3 +34,4 @@ Navigate to the examples folder and fire away!  It's recommended to close blende
 - pyenet - https://github.com/aresch/pyenet
 - bitstring - https://github.com/scott-griffiths/bitstring
 - python-serializer - https://github.com/pqftgs/python-serializer
+- compz - https://github.com/DCubix/Compz
