@@ -142,6 +142,7 @@ class ServerHost:
 
                 for buff in bufflist:
                     table = packer.to_table(buff)
+                    table.source = peerID
                     # Find the component by ID
                     component = self.components[table.get('id')]
 
