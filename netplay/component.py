@@ -11,8 +11,9 @@ class NetComponent:
         net = bge.logic.netplay
         # Weirdass workaround for network-enabled objects in the editor
         if owner is None:
-            owner = bge.logic.getCurrentScene().addObject(self.obj)
-            owner['_component'] = self
+            if hasattr(self, 'obj'):
+                owner = bge.logic.getCurrentScene().addObject(self.obj)
+                owner['_component'] = self
         elif not net.server:
             logging.warning("{}: You can't directly add network-enabled objects on clients".format(owner.name))
 
