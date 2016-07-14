@@ -127,4 +127,4 @@ def register_player(cont):
             owner.endObject()
             return
 
-        owner['_component'] = component.NetComponent(owner, None)
+        owner['_component'] = component.NetComponent(owner)

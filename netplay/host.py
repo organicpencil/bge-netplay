@@ -287,14 +287,13 @@ class ClientHost:
                         if comp is None:
                             logging.error('Missing expected component in table {}'.format(table.tableName()))
                         else:
-                            component = comp(None, table)
+                            component = comp(None)
                             self.components[net_id] = component
                             if net_id > self.last_component:
                                 self.last_component = net_id
 
-                            # Component will be indexed when the object initializes
-                            # FIXME - this will cause problems if the component
-                            # is added and deleted in the same frame, which is totally possible
+                            # Run the associated method (defined in serialize)
+                            getattr(component, table.tableName())(table)
                     else:
                         # Run the associated method
                         getattr(component, table.tableName())(table)

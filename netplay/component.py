@@ -7,7 +7,7 @@ from . import packer
 class NetComponent:
     obj = 'Cube'
 
-    def __init__(self, owner, table):
+    def __init__(self, owner):
         net = bge.logic.netplay
         # Weirdass workaround for network-enabled objects in the editor
         if owner is None:
@@ -36,15 +36,12 @@ class NetComponent:
         else:
             # Clients can only get new network objects from the server
             self.permission = False
-            self.start_client(table)
+            # Setup function defined by serialize will run after construction
 
     def start(self):
         """
-        Called before start_client and start_server
+        Called on both client and server
         """
-        return
-
-    def start_client(self, table):
         return
 
     def start_server(self):
@@ -65,9 +62,9 @@ class NetComponent:
     def _add_object(self, table):
         # The table is created by self.serialize on the server
         pos = [table.get('x'), table.get('y'), table.get('z')]
-        rot = mathutils.Euler(table.get('rot_x'),
+        rot = mathutils.Euler((table.get('rot_x'),
                               table.get('rot_y'),
-                              table.get('rot_z'))
+                              table.get('rot_z')))
 
         self.owner.worldPosition = pos
         self.owner.worldOrientation = rot
