@@ -219,6 +219,15 @@ class ClientHost:
         self.components = [None] * 65535
         self.last_component = 0 # Saves some iteration while looping
 
+        # Works the same, may as well re-use this code
+        self._wrapper = _Client(self.serverPeer)
+
+    def send_unreliable(self, buff):
+        self._wrapper.send_unreliable(buff)
+
+    def send_reliable(self, buff, channel=0):
+        self._wrapper.send_reliable(buff, channel)
+
     def onConnect(self):
         print ("Connected")
 
@@ -290,6 +299,7 @@ class ClientHost:
                             logging.error('Missing expected component in table {}'.format(table.tableName()))
                         else:
                             component = comp(None)
+                            component.net_id = net_id
                             self.components[net_id] = component
                             if net_id > self.last_component:
                                 self.last_component = net_id
@@ -299,3 +309,23 @@ class ClientHost:
                     else:
                         # Run the associated method
                         getattr(component, table.tableName())(table)
+
+        self.sendQueuedData()
+
+    def sendQueuedData(self):
+        c = self._wrapper
+        if len(c.unreliable):
+            joined_buffers = packer.join_buffers(c.unreliable)
+            c.unreliable = []
+            self.network.send(c.peer, joined_buffers, reliable=False)
+
+        channel = 0
+        for ch in c.reliable:
+            if len(ch):
+                joined_buffers = packer.join_buffers(ch)
+                self.network.send(c.peer, joined_buffers, reliable=True,
+                                  channel=channel)
+
+            channel += 1
+
+        c.reliable = [[]] * c.channels
