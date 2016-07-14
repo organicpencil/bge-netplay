@@ -2,6 +2,8 @@ from . import network, packer, builtin_tables
 import bge
 import logging
 
+logging.basicConfig(level=logging.INFO)
+
 
 class ServerHost:
 
