@@ -1,4 +1,4 @@
-from . import network, packer, component
+from . import network, packer, builtin_tables
 import bge
 import logging
 
@@ -8,7 +8,7 @@ class ServerHost:
     server = True
 
     def __init__(self, interface='', port=54303, version=0, maxclients=10):
-        component.define_builtin_tables()
+        builtin_tables.define()
 
         # Handy for server lists
         self.port = port
@@ -205,7 +205,7 @@ class ClientHost:
     server = False
 
     def __init__(self, server_ip='127.0.0.1', server_port=54303, version=0):
-        component.define_builtin_tables()
+        builtin_tables.define()
 
         self.server_ip = server_ip
         self.server_port = server_port
