@@ -73,7 +73,12 @@ def to_bytes(table):
 def to_table(buff):
     # Read the first 2 bytes to determine table ID
     table_id = struct.unpack('!H', buff[:2])[0]
-    tabledef = _TABLE_LIST[table_id]
+    try:
+        tabledef = _TABLE_LIST[table_id]
+    except IndexError as err:
+        msg = 'Table ID {} missing'.format(table_id)
+        err.args = err.args + (msg,)
+        raise
 
     size = struct.calcsize(tabledef._formatstring)
     data = struct.unpack(tabledef._formatstring, buff[:size])
@@ -103,14 +108,19 @@ def to_table(buff):
 
 
 class TableDef:
-    def __init__(self, name):
+    def __init__(self, name, template=None):
         if _TABLES.get(name, None) is not None:
             warnings.warn("Table already defined: {}".format(name))
 
         self._name = name
         self._id = len(_TABLE_LIST)
-        self._datatypes = collections.OrderedDict()
-        self._formatstring = '!H'
+
+        if template is None:
+            self._datatypes = collections.OrderedDict()
+            self._formatstring = '!H'
+        else:
+            self._datatypes = copy.deepcopy(template._datatypes)
+            self._formatstring = template._formatstring
 
         _TABLES[name] = self
         _TABLE_LIST.append(self)
