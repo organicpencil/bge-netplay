@@ -5,13 +5,13 @@ from . import packer
 
 
 class NetComponent:
-    obj = 'Cube'
+    obj = None
 
     def __init__(self, owner):
         net = bge.logic.netplay
         # Weirdass workaround for network-enabled objects in the editor
         if owner is None:
-            if hasattr(self, 'obj'):
+            if self.obj is not None:
                 owner = bge.logic.getCurrentScene().addObject(self.obj)
                 owner['_component'] = self
         elif not net.server:
