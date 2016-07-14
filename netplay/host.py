@@ -133,7 +133,8 @@ class ServerHost:
 
             elif event.type == network.EVENT_TYPE_DISCONNECT:
                 logging.info("{} disconnecting".format(event.peer.address))
-                self._removeClient(event.peer)
+                peerID = event.peer.incomingPeerID
+                self._removeClient(peerID)
 
             elif event.type == network.EVENT_TYPE_RECEIVE:
                 peerID = event.peer.incomingPeerID
