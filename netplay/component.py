@@ -1,79 +1,113 @@
 import bge
+import mathutils
 import logging
+from . import packer
 
-net = bge.logic.netplay
+
+def define_builtin_tables():
+    tdef = packer.TableDef('_add_object')
+    tdef.define('uint16', 'id')
+    tdef.define('float', 'x', 0.0)
+    tdef.define('float', 'y', 0.0)
+    tdef.define('float', 'z', 0.0)
+    tdef.define('float', 'rot_x', 0.0)
+    tdef.define('float', 'rot_y', 0.0)
+    tdef.define('float', 'rot_z', 0.0)
+    # Netplay needs a component reference on tables used to spawn components
+    tdef.component = NetComponent
+    # If you want to re-use a table for multiple components, the best option
+    # is to create a new table with the old table as a template
+    # new_tabledef = packer.TableDef('unique_name', template=old_tabledef)
+
+    # Alternatively you can run them from an existing component and specify
+    # component/whatever in the data.  But that will use more bandwidth
 
 
 class NetComponent:
-    def start(self, args):
-        # Netplay needs to be initialized before the scene loads
-        if net.server:
-            self.permissions = []  # Client IDs allowed to send input
-            self.net_id = 0  # FIXME
-            self.setup()
-            self.start_server()
-            buff = self.get_setup_data()
-            if buff is None:
-                logging.error('No setup data')
-            else:
-                # Send it
-                for c in net.clients:
-                    if c is not None:
-                        c.send_reliable(buff)
-        else:
-            self.permission = False
-            ob = self.object
-            if '_net_table' in ob:
-                self.setup()
-                self.start_client(ob['_net_table'])
-            else:
-                # On clients, all network-enabled objects placed in the editor
-                # are initially removed.  The server will re-add as needed.
-                # It's workarounds like this that make me question the
-                # validity of such a project.
-                ob.endObject()
+    obj = 'Cube'
 
-    def setup(self):
-        # Stuff to call on both client and server
+    def __init__(self, owner, table):
+        net = bge.logic.netplay
+        # Weirdass workaround for network-enabled objects in the editor
+        if owner is None:
+            owner = bge.logic.getCurrentScene().addObject(self.obj)
+            owner['_component'] = self
+        elif not net.server:
+            logging.warning("{}: You can't directly add network-enabled objects on clients".format(owner.name))
+
+        self.owner = owner
+
+        self.start()
+
+        if net.server:
+            # On the server we spawn components by placing objects in the editor
+            # or spawning with scene.addObject
+            self.permissions = []
+            net.assignComponentID(self)
+            self.start_server()
+
+            buff = self.serialize()
+            for c in net.clients:
+                if c is not None:
+                    c.send_reliable(buff)
+
+        else:
+            # Clients can only get new network objects from the server
+            self.permission = False
+            self.start_client(table)
+
+    def start(self):
+        """
+        Called before start_client and start_server
+        """
+        return
+
+    def start_client(self, table):
         return
 
     def start_server(self):
         return
 
     def update(self):
-        self.update_both()
-
-        if net.server:
-            self.update_server()
-        else:
-            self.update_client()
-
-    def update_both(self):
-        return
-
-    def update_server(self):
+        """
+        Called before update_client and update_server
+        """
         return
 
     def update_client(self):
         return
 
-    def get_setup_data(self):
-        # This gets called when we need data to spawn the object client-side
-        # Typically when the object is first created & when new clients connect
-        """
-        table = packer.Table('NameOfTable')
+    def update_server(self):
+        return
 
-        # Netplay needs 'id' in the component state table
+    def _add_object(self, table):
+        # The table is created by self.serialize on the server
+        pos = [table.get('x'), table.get('y'), table.get('z')]
+        rot = mathutils.Euler(table.get('rot_x'),
+                              table.get('rot_y'),
+                              table.get('rot_z'))
+
+        self.owner.worldPosition = pos
+        self.owner.worldOrientation = rot
+
+    def serialize(self):
+        # Runs on the server when the object is spawned or a client connects
+
+        # Builtin table, see definition in host.py
+        table = packer.Table('_add_object')
+
+        # Always need to serialize the component ID
         table.set('id', self.net_id)
 
         # Everything else can be whatever
-        table.set('name', self.playername)
-
-        pos = self.object.worldPosition
+        pos = self.owner.worldPosition
         table.set('x', pos[0])
         table.set('y', pos[1])
         table.set('z', pos[2])
 
+        rot = self.owner.worldOrientation.to_euler()
+        table.set('rot_x', rot[0])
+        table.set('rot_y', rot[1])
+        table.set('rot_z', rot[2])
+
         return packer.to_bytes(table)
-        """
-        return None

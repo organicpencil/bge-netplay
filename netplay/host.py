@@ -1,4 +1,4 @@
-from . import network, packer
+from . import network, packer, component
 import bge
 import logging
 
@@ -8,6 +8,8 @@ class ServerHost:
     server = True
 
     def __init__(self, interface='', port=54303, version=0, maxclients=10):
+        component.define_builtin_tables()
+
         # Handy for server lists
         self.port = port
         self.version = version
@@ -16,6 +18,7 @@ class ServerHost:
         # Client ID == enet peer ID
         self.clients = [None] * maxclients
         self.components = [None] * 65535
+        self.last_component = 0 # Saves some iteration while looping
 
         if network is None:
             # No compatible network library was supplied
@@ -27,6 +30,17 @@ class ServerHost:
                 maxclients=maxclients)
 
             logging.info('Server started')
+
+    def assignComponentID(self, component):
+        i = 0
+        for comp in self.components:
+            if comp is None:
+                self.components[i] = component
+                component.net_id = i
+                self.last_component = i
+                return
+
+            i += 1
 
     def onConnect(self, peer_id):
         """
@@ -50,6 +64,20 @@ class ServerHost:
         client = _Client(peer)
         self.clients[peerID] = client
 
+        # Send everything!
+        i = 0
+        for comp in self.components:
+            if i > self.last_component:
+                break
+
+            i += 1
+
+            if comp is None:
+                continue
+
+            client.send_reliable(comp.serialize())
+
+        # User-defined
         self.onConnect(peerID)
 
     def _removeClient(self, peerID):
@@ -59,9 +87,28 @@ class ServerHost:
             return
 
         self.clients[peerID] = None
+
+        # User-defined
         self.onDisconnect(peerID)
 
+    def _update_components(self):
+        i = 0
+        last = self.last_component
+        for comp in self.components:
+            if i > last:
+                return
+
+            i += 1
+
+            if comp is None:
+                continue
+
+            comp.update()
+            comp.update_server()
+
     def update(self):
+        self._update_components()
+
         if self.network is None:
             # Flush queued data
             return
@@ -158,6 +205,8 @@ class ClientHost:
     server = False
 
     def __init__(self, server_ip='127.0.0.1', server_port=54303, version=0):
+        component.define_builtin_tables()
+
         self.server_ip = server_ip
         self.server_port = server_port
 
@@ -166,6 +215,7 @@ class ClientHost:
         self.serverPeer = self.network.connect(server_ip, server_port)
 
         self.components = [None] * 65535
+        self.last_component = 0 # Saves some iteration while looping
 
     def onConnect(self):
         print ("Connected")
@@ -176,8 +226,23 @@ class ClientHost:
     def getPing(self):
         return self.serverPeer.roundTripTime
 
+    def _update_components(self):
+        i = 0
+        last = self.last_component
+        for comp in self.components:
+            if i > last:
+                return
+
+            i += 1
+
+            if comp is None:
+                continue
+
+            comp.update()
+            comp.update_client()
+
     def update(self):
-        scene = bge.logic.getCurrentScene()
+        self._update_components()
 
         event_backlog = []
         if self.network.threaded:
@@ -213,16 +278,23 @@ class ClientHost:
                 for buff in bufflist:
                     table = packer.to_table(buff)
                     # Find the component by ID
-                    component = self.components[table.get('id')]
+                    net_id = table.get('id')
+                    component = self.components[net_id]
 
                     if component is None:
                         # Component doesn't exist.  Assume this is for creation.
-                        obj = getattr(table, 'obj', None)
-                        if obj is None:
-                            logging.warning('obj not defined')
+                        comp = getattr(table._tabledef, 'component', None)
+                        if comp is None:
+                            logging.error('Missing expected component in table {}'.format(table.tableName()))
                         else:
-                            ob = scene.addObject(obj)
-                            ob['_net_table'] = table
+                            component = comp(None, table)
+                            self.components[net_id] = component
+                            if net_id > self.last_component:
+                                self.last_component = net_id
+
+                            # Component will be indexed when the object initializes
+                            # FIXME - this will cause problems if the component
+                            # is added and deleted in the same frame, which is totally possible
                     else:
                         # Run the associated method
                         getattr(component, table.tableName())(table)
