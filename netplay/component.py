@@ -14,8 +14,10 @@ class NetComponent:
             if self.obj is not None:
                 owner = bge.logic.getCurrentScene().addObject(self.obj)
                 owner['_component'] = self
-        elif not net.server:
+        elif not net.server and not '_component' in owner:
             logging.warning("{}: You can't directly add network-enabled objects on clients".format(owner.name))
+            owner.endObject()
+            return
 
         self.owner = owner
 
