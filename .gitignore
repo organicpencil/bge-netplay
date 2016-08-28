@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.blend1
+2.77/
+blenderplayer
+*.so
+*.pyd
+compz/
