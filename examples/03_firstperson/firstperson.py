@@ -1,4 +1,3 @@
-import types
 import bge
 import mathutils
 from netplay import packer, component, bitstring
@@ -28,7 +27,7 @@ def define_tables():
     tabledef.define('float', 'rot_x')
     tabledef.define('float', 'rot_z')
 
-    tabledef= packer.TableDef('ClientStatePos')
+    tabledef = packer.TableDef('ClientStatePos')
     tabledef.define('uint16', 'id')
     tabledef.define('uint8', 'input', 0)
     tabledef.define('float', 'rot_x')
