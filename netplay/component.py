@@ -15,7 +15,7 @@ class NetComponent:
                 owner = bge.logic.getCurrentScene().addObject(self.obj)
                 owner['_component'] = self
         elif not net.server and not '_component' in owner:
-            logging.warning("{}: You can't directly add network-enabled objects on clients".format(owner.name))
+            logging.warning("{}: You shouldn't directly add network-enabled objects on clients.".format(owner.name))
             owner.endObject()
             return
 
@@ -40,6 +40,44 @@ class NetComponent:
             self.permission = False
             # Setup function defined by serialize will run after construction
 
+    def givePermission(self, peer_id):
+        if peer_id in self.permissions:
+            logging.warning('Client already has access to this component')
+            return
+
+        self.permissions.append(peer_id)
+
+        # Notify the client
+        table = packer.Table('_permission')
+        table.set('id', self.net_id)
+        table.set('state', 1)
+
+        buff = packer.to_bytes(table)
+        bge.logic.netplay.clients[peer_id].send_reliable(buff)
+
+    def takePermission(self, peer_id):
+        if peer_id not in self.permissions:
+            # Didn't have permission
+            logging.warning('Client did not have access to this component')
+            return
+
+        self.permissions.remove(peer_id)
+
+        # Notify the client
+        table = packer.Table('_permission')
+        table.set('id', self.net_id)
+        table.set('state', 0)
+
+        buff = packer.to_bytes(table)
+        bge.logic.netplay.clients[peer_id].send_reliable(buff)
+
+    def _permission(self, table):
+        if bge.logic.netplay.server:
+            logging.warning('Permission flag is not used on the server')
+            return
+
+        self.permission = bool(table.get('state'))
+
     def start(self):
         """
         Called on both client and server
@@ -62,6 +100,7 @@ class NetComponent:
         return
 
     def _add_object(self, table):
+        print ("Why is this being called")
         # The table is created by self.serialize on the server
         pos = [table.get('x'), table.get('y'), table.get('z')]
         rot = mathutils.Euler((table.get('rot_x'),
