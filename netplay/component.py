@@ -39,6 +39,7 @@ class NetComponent:
             # Clients can only get new network objects from the server
             self.permission = False
             # Setup function defined by serialize will run after construction
+            self.start_client()
 
     def givePermission(self, peer_id):
         if peer_id in self.permissions:
