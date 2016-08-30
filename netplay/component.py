@@ -7,12 +7,15 @@ from . import packer
 class NetComponent:
     obj = None
 
-    def __init__(self, owner):
+    def __init__(self, owner, ref=None):
         net = bge.logic.netplay
         # Weirdass workaround for network-enabled objects in the editor
         if owner is None:
             if self.obj is not None:
-                owner = bge.logic.getCurrentScene().addObject(self.obj)
+                if ref is None:
+                    owner = bge.logic.getCurrentScene().addObject(self.obj)
+                else:
+                    owner = bge.logic.getCurrentScene().addObject(self.obj, ref)
                 owner['_component'] = self
         elif not net.server and not '_component' in owner:
             logging.warning("{}: You shouldn't directly add network-enabled objects on clients.".format(owner.name))
