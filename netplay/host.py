@@ -39,7 +39,8 @@ class ServerHost:
             if comp is None:
                 self.components[i] = component
                 component.net_id = i
-                self.last_component = i
+                if i > self.last_component:
+                    self.last_component = i
                 return
 
             i += 1
