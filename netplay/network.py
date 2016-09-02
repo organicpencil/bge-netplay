@@ -2,13 +2,16 @@ import collections
 import threading
 import time
 
-from . import enet
+try:
+    from . import enet
 
 
-# Wrapper stuff
-EVENT_TYPE_CONNECT = enet.EVENT_TYPE_CONNECT
-EVENT_TYPE_DISCONNECT = enet.EVENT_TYPE_DISCONNECT
-EVENT_TYPE_RECEIVE = enet.EVENT_TYPE_RECEIVE
+    # Wrapper stuff
+    EVENT_TYPE_CONNECT = enet.EVENT_TYPE_CONNECT
+    EVENT_TYPE_DISCONNECT = enet.EVENT_TYPE_DISCONNECT
+    EVENT_TYPE_RECEIVE = enet.EVENT_TYPE_RECEIVE
+except:
+    enet = None
 
 
 class Sleeper:

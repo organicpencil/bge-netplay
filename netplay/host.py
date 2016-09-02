@@ -22,7 +22,7 @@ class ServerHost:
         self.components = [None] * 65535
         self.last_component = 0 # Saves some iteration while looping
 
-        if network is None:
+        if network.enet is None:
             # No compatible network library was supplied
             self.network = None
             logging.warning('Enet not found.  Network play is disabled.')
