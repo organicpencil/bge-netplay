@@ -9,7 +9,7 @@ class ServerHost:
 
     server = True
 
-    def __init__(self, interface='', port=54303, version=0, maxclients=10):
+    def __init__(self, interface='', port=54303, version=0, maxclients=10, offline=False):
         builtin_tables.define()
 
         # Handy for server lists
@@ -22,7 +22,10 @@ class ServerHost:
         self.components = [None] * 65535
         self.last_component = 0 # Saves some iteration while looping
 
-        if network.enet is None:
+        if offline:
+            self.network = None
+            logging.info('Single player selected')
+        elif network.enet is None:
             # No compatible network library was supplied
             self.network = None
             logging.warning('Enet not found.  Network play is disabled.')
