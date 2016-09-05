@@ -119,6 +119,9 @@ class TableDef:
             self._datatypes = collections.OrderedDict()
             self._formatstring = '!H'
         else:
+            if type(template) is str:
+                template = _TABLES[template]
+
             self._datatypes = copy.deepcopy(template._datatypes)
             self._formatstring = template._formatstring
 

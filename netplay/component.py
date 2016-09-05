@@ -1,6 +1,6 @@
+import logging
 import bge
 import mathutils
-import logging
 from . import packer
 
 
@@ -82,6 +82,19 @@ class NetComponent:
 
         self.permission = bool(table.get('state'))
 
+    def _destroy(self, table):
+        host = bge.logic.netplay
+        if host.server:
+            # Lets you call _destroy directly on server
+            # Also allows clients with permission to self-destruct their object
+            buff = packer.to_bytes(table)
+            for c in host.clients:
+                if c is not None:
+                    c.send_reliable(buff)
+
+        if self.owner is not None:
+            self.owner.endObject()
+
     def start(self):
         """
         Called on both client and server
@@ -128,6 +141,36 @@ class NetComponent:
         table.set('x', pos[0])
         table.set('y', pos[1])
         table.set('z', pos[2])
+
+        rot = self.owner.worldOrientation.to_euler()
+        table.set('rot_x', rot[0])
+        table.set('rot_y', rot[1])
+        table.set('rot_z', rot[2])
+
+        return packer.to_bytes(table)
+
+
+class StaticComponent(NetComponent):
+    obj = None
+    setup = '_StaticSetup'
+
+    def _StaticSetup(self, table):
+        get = table.get
+        pos = (get('pos_x'), get('pos_y'), get('pos_z'))
+        rot = mathutils.Quaternion((get('rot_x'), get('rot_y'), get('rot_z')))
+
+        self.owner.worldPosition = pos
+        self.owner.worldOrientation = rot
+
+    def serialize(self):
+        table = packer.Table(self.setup)
+
+        table.set('id', self.net_id)
+
+        pos = self.owner.worldPosition
+        table.set('pos_x', pos[0])
+        table.set('pos_y', pos[1])
+        table.set('pos_z', pos[2])
 
         rot = self.owner.worldOrientation.to_euler()
         table.set('rot_x', rot[0])
