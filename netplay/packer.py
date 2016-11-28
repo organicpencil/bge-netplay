@@ -51,7 +51,7 @@ def to_bytes(table):
     data = []
     json_data = []
 
-    for key, value in table._data.items():
+    for key, value in list(table._data.items()):
         d = value[0]
         v = value[1]
 
@@ -86,7 +86,7 @@ def to_table(buff):
     table = Table(tabledef)
 
     i = 1  # table ID is still in here, so we skip
-    for key, value in tabledef._datatypes.items():
+    for key, value in list(tabledef._datatypes.items()):
         d = value[0]
 
         if d == 'json':
@@ -144,7 +144,7 @@ class TableDef:
         # Rebuild the format string
         formatstring = '!H'
 
-        for value in self._datatypes.values():
+        for value in list(self._datatypes.values()):
             d = value[0]
             if d != 'json':  # json is appened to the end of the buffer
                 formatstring += d
