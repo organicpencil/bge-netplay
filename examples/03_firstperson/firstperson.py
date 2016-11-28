@@ -40,17 +40,17 @@ def define_tables():
     tabledef = packer.TableDef('Destroy')
     tabledef.define('uint16', 'id')
 
-    # onConnect and onDisconnect callbacks for spawning players on the server
-    ServerHost.onConnect = onConnect
-    ServerHost.onDisconnect = onDisconnect
+    # on_connect and on_disconnect callbacks for spawning players on the server
+    ServerHost.on_connect = on_connect
+    ServerHost.on_disconnect = on_disconnect
 
 
-def onConnect(self, peer_id):
+def on_connect(self, peer_id):
     comp = Player(None)
-    comp.givePermission(peer_id)
+    comp.give_permission(peer_id)
 
 
-def onDisconnect(self, peer_id):
+def on_disconnect(self, peer_id):
     for comp in self.components:
         if comp is not None and peer_id in comp.permissions:
             comp.permissions.remove(peer_id)
@@ -288,7 +288,7 @@ class Player(component.NetComponent):
         if self.permission:
             # Only apply if too far out of sync
             dist = self.owner.getDistanceTo(self.expected_position)
-            t = bge.logic.netplay.getPing() / 200.0 # Allowing time x5 variance
+            t = bge.logic.netplay.get_ping() / 200.0 # Allowing time x5 variance
             if dist < self.speed * t:
                 return
 

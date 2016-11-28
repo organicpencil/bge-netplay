@@ -146,11 +146,11 @@ class ChatWindow(component.NetComponent):
         return packer.to_bytes(table)
 
 
-def onConnect(peerID):
+def on_connect(peerID):
     bge.logic.chat.permissions.append(peerID)
 
 
-def onDisconnect(peerID):
+def on_disconnect(peerID):
     bge.logic.chat.permissions.append(peerID)
 
 
@@ -164,5 +164,5 @@ def register_chat(cont):
 
     if bge.logic.netplay.server:
         bge.logic.chat = ChatWindow(None)
-        bge.logic.netplay.onConnect = onConnect
-        bge.logic.netplay.onDisconnect = onDisconnect
+        bge.logic.netplay.on_connect = on_connect
+        bge.logic.netplay.on_disconnect = on_disconnect

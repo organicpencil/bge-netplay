@@ -60,7 +60,7 @@ class ENetWrapper:
         packet = enet.Packet(buff, flag)
         peer.send(channel, packet)
 
-    def enableThreading(self, timeout=60.0):
+    def enable_threading(self, timeout=60.0):
         """
         Moves the network stuff to another thread, ideal for keeping your spot
         while loading the map.  Events will backlog until threading is
@@ -80,7 +80,7 @@ class ENetWrapper:
         self.thread.start()
         return True
 
-    def disableThreading(self):
+    def disable_threading(self):
         if not self.threaded:
             print ("Not currently threaded")
             return []

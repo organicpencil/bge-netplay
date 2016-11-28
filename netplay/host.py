@@ -36,7 +36,7 @@ class ServerHost:
 
             logging.info('Server started')
 
-    def assignComponentID(self, component):
+    def assign_component_id(self, component):
         i = 0
         for comp in self.components:
             if comp is None:
@@ -48,13 +48,13 @@ class ServerHost:
 
             i += 1
 
-    def onConnect(self, peer_id):
+    def on_connect(self, peer_id):
         """
         Override this
         """
         return
 
-    def onDisconnect(self, peer_id):
+    def on_disconnect(self, peer_id):
         """
         Override this
         """
@@ -84,7 +84,7 @@ class ServerHost:
             client.send_reliable(comp.serialize())
 
         # User-defined
-        self.onConnect(peerID)
+        self.on_connect(peerID)
 
     def _removeClient(self, peerID):
         # Assumes peer was already disconnected
@@ -95,7 +95,7 @@ class ServerHost:
         self.clients[peerID] = None
 
         # User-defined
-        self.onDisconnect(peerID)
+        self.on_disconnect(peerID)
 
     def _update_components(self):
         i = 0
@@ -121,7 +121,7 @@ class ServerHost:
 
         event_backlog = []
         if self.network.threaded:
-            event_backlog = self.network.disableThreading()
+            event_backlog = self.network.disable_threading()
 
         while True:
             if len(event_backlog):
@@ -163,9 +163,9 @@ class ServerHost:
                     else:
                         logging.warning('Client does not have input permission')
 
-        self.sendQueuedData()
+        self.send_queued_data()
 
-    def sendQueuedData(self):
+    def send_queued_data(self):
         if self.network is None:
             return
 
@@ -234,13 +234,13 @@ class ClientHost:
     def send_reliable(self, buff, channel=0):
         self._wrapper.send_reliable(buff, channel)
 
-    def onConnect(self):
+    def on_connect(self):
         print ("Connected")
 
-    def onDisconnect(self):
+    def on_disconnect(self):
         print ("Disconnected")
 
-    def getPing(self):
+    def get_ping(self):
         return self.serverPeer.roundTripTime
 
     def _update_components(self):
@@ -263,7 +263,7 @@ class ClientHost:
 
         event_backlog = []
         if self.network.threaded:
-            event_backlog = self.network.disableThreading()
+            event_backlog = self.network.disable_threading()
 
         while True:
             if len(event_backlog):
@@ -280,7 +280,7 @@ class ClientHost:
                     continue
 
                 self.connected = True
-                self.onConnect()
+                self.on_connect()
 
             elif event.type == network.EVENT_TYPE_DISCONNECT:
                 if not self.connected:
@@ -288,7 +288,7 @@ class ClientHost:
                     break
 
                 self.connected = False
-                self.onDisconnect()
+                self.on_disconnect()
 
             elif event.type == network.EVENT_TYPE_RECEIVE:
                 bufflist = packer.unjoin_buffers(event.packet.data)
@@ -316,9 +316,9 @@ class ClientHost:
                         # Run the associated method
                         getattr(component, table.tableName())(table)
 
-        self.sendQueuedData()
+        self.send_queued_data()
 
-    def sendQueuedData(self):
+    def send_queued_data(self):
         c = self._wrapper
         if len(c.unreliable):
             joined_buffers = packer.join_buffers(c.unreliable)

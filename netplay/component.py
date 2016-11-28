@@ -30,7 +30,7 @@ class NetComponent:
             # On the server we spawn components by placing objects in the editor
             # or spawning with scene.addObject
             self.permissions = []
-            net.assignComponentID(self)
+            net.assign_component_id(self)
             self.start_server()
 
             buff = self.serialize()
@@ -44,7 +44,7 @@ class NetComponent:
             # Setup function defined by serialize will run after construction
             self.start_client()
 
-    def givePermission(self, peer_id):
+    def give_permission(self, peer_id):
         if peer_id in self.permissions:
             logging.warning('Client already has access to this component')
             return
