@@ -181,6 +181,12 @@ class Table:
             value = value[1]
         return value
 
+    def __setitem__(self, key, value):
+        self.set(key, value)
+
+    def __getitem__(self, key):
+        return self.get(key)
+
     def tableName(self):
         return self._tabledef._name
 
