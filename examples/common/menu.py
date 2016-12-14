@@ -6,29 +6,31 @@ from netplay import host
 class Menu:
     def __init__(self, cont):
         self.cont = cont
-        self.c = c = compz.Compz()
 
-        stylepath = bge.logic.expandPath('//../common/style/')
-        panelStyle = compz.Style(name="panel", stylesPath=stylepath)
-        buttonStyle = compz.Style(name="button", stylesPath=stylepath)
+        skin = bge.logic.expandPath('//../common/skin.png')
+        font = bge.logic.expandPath('//../common/Anonymous Pro.ttf')
+        style = compz.Style(skin, font)
+        icons = bge.logic.expandPath('//../common/icons/')
 
-        panel = compz.Panel(panelStyle)
+        self.c = c = compz.Compz(style)
+
+        panel = compz.Panel()
         panel.position = [50, 50]
-        panel.width = 200
-        panel.height = 200
+        panel.width = 100
+        panel.height = 94
         c.addComp(panel)
 
-        server = compz.Button("Server", buttonStyle)
+        server = compz.Button("Server")
         server.events.set(compz.EV_MOUSE_CLICK, self.start_server)
-        server.icon = compz.Icon(stylepath + 'network-server.png')
+        server.icon = compz.Icon(icons + 'network-server.png')
 
-        client = compz.Button("Client", buttonStyle)
+        client = compz.Button("Client")
         client.events.set(compz.EV_MOUSE_CLICK, self.start_client)
-        client.icon = compz.Icon(stylepath + 'computer.png')
+        client.icon = compz.Icon(icons + 'computer.png')
 
-        end = compz.Button("Exit", buttonStyle)
+        end = compz.Button("Exit")
         end.events.set(compz.EV_MOUSE_CLICK, self.end_game)
-        end.icon = compz.Icon(stylepath + 'application-exit.png')
+        end.icon = compz.Icon(icons + 'application-exit.png')
 
         panel.addComp(server)
         panel.addComp(client)
