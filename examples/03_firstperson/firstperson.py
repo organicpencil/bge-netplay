@@ -67,7 +67,7 @@ def on_disconnect(self, peer_id):
                         client.send_reliable(buff)
 
 
-class Player(component.NetComponent):
+class Player(component.GameObject):
     obj = 'player'
 
     def start(self):
@@ -95,17 +95,6 @@ class Player(component.NetComponent):
         self.pos_timer = 30
         self.pos_timer_reset = 30
 
-    def PlayerSetup(self, table):
-        get = table.get
-        pos = (get('pos_x'), get('pos_y'), get('pos_z'))
-        rot = mathutils.Quaternion((get('rot_x'),
-                                    get('rot_y'),
-                                    get('rot_z'),
-                                    get('rot_w')))
-
-        self.owner.worldPosition = pos
-        self.owner.worldOrientation = rot
-
     def serialize(self):
         table = packer.Table('PlayerSetup')
         pos = self.owner.worldPosition
@@ -122,6 +111,17 @@ class Player(component.NetComponent):
         table.set('input', self.keystate.uint)
 
         return packer.to_bytes(table)
+
+    def deserialize(self, table):
+        get = table.get
+        pos = (get('pos_x'), get('pos_y'), get('pos_z'))
+        rot = mathutils.Quaternion((get('rot_x'),
+                                    get('rot_y'),
+                                    get('rot_z'),
+                                    get('rot_w')))
+
+        self.owner.worldPosition = pos
+        self.owner.worldOrientation = rot
 
     def ClientState(self, table):
         if not bge.logic.netplay.server and self.permission:
@@ -266,7 +266,7 @@ class Player(component.NetComponent):
         bge.render.setMousePosition(centerX, centerY)
 
     def _permission(self, table):
-        component.NetComponent._permission(self, table)
+        component.GameObject._permission(self, table)
         if self.permission:
             bge.logic.getCurrentScene().active_camera = self.head.children['player-camera']
             bge.render.showMouse(False)

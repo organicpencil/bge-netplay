@@ -310,8 +310,7 @@ class ClientHost:
                             if net_id > self.last_component:
                                 self.last_component = net_id
 
-                            # Run the associated method (defined in serialize)
-                            getattr(component, table.tableName())(table)
+                            component.deserialize(table)
                     else:
                         # Run the associated method
                         getattr(component, table.tableName())(table)

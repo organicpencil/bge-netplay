@@ -22,7 +22,7 @@ def define_tables():
     tabledef.define('json', 'fullmessage')
 
 
-class ChatWindow(component.NetComponent):
+class ChatWindow(component.GameObject):
     obj = None
 
     def start(self):
@@ -65,38 +65,45 @@ class ChatWindow(component.NetComponent):
 
         bge.logic.netplay.send_reliable(buff)
 
-    def ChatSetup(self, table):
-        self.c = c = compz.Compz()
+    def serialize(self):
+        data = list(self.messages)
 
-        stylepath = bge.logic.expandPath('//../common/style/')
-        panelStyle = compz.Style(name="panel", stylesPath=stylepath)
-        buttonStyle = compz.Style(name="button", stylesPath=stylepath)
-        entryStyle = compz.Style(name="entry", stylesPath=stylepath)
+        table = packer.Table('ChatSetup')
+        table.set('id', self.net_id)
+        table.set('messages', data)
+
+        return packer.to_bytes(table)
+
+    def deserialize(self, table):
+        skin = bge.logic.expandPath('//../common/skin.png')
+        font = bge.logic.expandPath('//../common/Anonymous Pro.ttf')
+        style = compz.Style(skin, font)
+        self.c = c = compz.Compz(style)
 
         # Needs to be a grid panel, I think
         # That or 2 separate panels
-        panel = compz.Panel(panelStyle)
+        panel = compz.Panel()
         p = bge.render.getWindowHeight() - 64
         panel.position = [32, p]
         panel.width = 100
         panel.height = 32
         c.addComp(panel)
 
-        send = compz.Button("Send", buttonStyle)
+        send = compz.Button("Send")
         send.events.set(compz.EV_MOUSE_CLICK, self.send_click)
         #server.icon = compz.Icon(stylepath + 'network-server.png')
         panel.addComp(send)
 
-        panel = compz.Panel(panelStyle)
+        panel = compz.Panel()
         panel.position = [128, p]
         panel.width = bge.render.getWindowWidth() - 160
         panel.height = 32
         c.addComp(panel)
 
-        self.entry = entry = compz.Entry(style=entryStyle)
+        self.entry = entry = compz.Entry()
         panel.addComp(entry)
 
-        panel = compz.Panel(panelStyle)
+        panel = compz.Panel()
         panel.position = [32, 32]
         panel.width = bge.render.getWindowWidth() - 64
         panel.height = p - 48
@@ -135,15 +142,6 @@ class ChatWindow(component.NetComponent):
 
     def update_client(self):
         self.c.update()
-
-    def serialize(self):
-        data = list(self.messages)
-
-        table = packer.Table('ChatSetup')
-        table.set('id', self.net_id)
-        table.set('messages', data)
-
-        return packer.to_bytes(table)
 
 
 def on_connect(peerID):

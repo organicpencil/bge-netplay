@@ -4,7 +4,7 @@ import mathutils
 from . import packer
 
 
-class NetComponent:
+class GameObject:
     obj = None
 
     def __init__(self, owner, ref=None):
@@ -104,6 +104,9 @@ class NetComponent:
     def start_server(self):
         return
 
+    def start_client(self):
+        return
+
     def update(self):
         """
         Called before update_client and update_server
@@ -116,65 +119,76 @@ class NetComponent:
     def update_server(self):
         return
 
-    def _add_object(self, table):
-        print ("Why is this being called")
-        # The table is created by self.serialize on the server
-        pos = [table.get('x'), table.get('y'), table.get('z')]
-        rot = mathutils.Euler((table.get('rot_x'),
-                              table.get('rot_y'),
-                              table.get('rot_z')))
+    def serialize(self):
+        # Runs on server when object is spawned or client connects
+        # See builtin_tables.py
+        table = packer.Table('_GameObject')
+        table['id'] = self.net_id  # Netplay always requires an ID
+
+        pos = self.owner.worldPosition
+        table['pos_x'] = pos[0]
+        table['pos_y'] = pos[1]
+        table['pos_z'] = pos[2]
+
+        rot = self.owner.worldOrientation.to_quaternion()
+        table['rot_x'] = rot[0]
+        table['rot_y'] = rot[1]
+        table['rot_z'] = rot[2]
+        table['rot_w'] = rot[3]
+
+        return packer.to_bytes(table)
+
+    def deserialize(self, table):
+        # Runs on client when object is spawned
+        pos = mathutils.Vector((table['pos_x'], table['pos_y'], table['pos_z']))
+        rot = mathutils.Quaternion((table['rot_x'], table['rot_y'],
+                                    table['rot_z'], table['rot_w']))
 
         self.owner.worldPosition = pos
         self.owner.worldOrientation = rot
 
-    def serialize(self):
-        # Runs on the server when the object is spawned or a client connects
 
-        # Builtin table, see definition in host.py
-        table = packer.Table('_add_object')
-
-        # Always need to serialize the component ID
-        table.set('id', self.net_id)
-
-        # Everything else can be whatever
-        pos = self.owner.worldPosition
-        table.set('x', pos[0])
-        table.set('y', pos[1])
-        table.set('z', pos[2])
-
-        rot = self.owner.worldOrientation.to_euler()
-        table.set('rot_x', rot[0])
-        table.set('rot_y', rot[1])
-        table.set('rot_z', rot[2])
-
-        return packer.to_bytes(table)
-
-
-class StaticComponent(NetComponent):
+class RigidGameObject(GameObject):
+    # Not totally functional
     obj = None
-    setup = '_StaticSetup'
-
-    def _StaticSetup(self, table):
-        get = table.get
-        pos = (get('pos_x'), get('pos_y'), get('pos_z'))
-        rot = mathutils.Quaternion((get('rot_x'), get('rot_y'), get('rot_z')))
-
-        self.owner.worldPosition = pos
-        self.owner.worldOrientation = rot
 
     def serialize(self):
-        table = packer.Table(self.setup)
+        owner = self.owner
+        table = packer.Table('_RigidGameObject')
+        table['id'] = self.net_id
 
-        table.set('id', self.net_id)
+        pos = owner.worldPosition
+        table['pos_x'] = pos[0]
+        table['pos_y'] = pos[1]
+        table['pos_z'] = pos[2]
 
-        pos = self.owner.worldPosition
-        table.set('pos_x', pos[0])
-        table.set('pos_y', pos[1])
-        table.set('pos_z', pos[2])
+        rot = owner.worldOrientation.to_quaternion()
+        table['rot_x'] = rot[0]
+        table['rot_y'] = rot[1]
+        table['rot_z'] = rot[2]
+        table['rot_w'] = rot[3]
 
-        rot = self.owner.worldOrientation.to_euler()
-        table.set('rot_x', rot[0])
-        table.set('rot_y', rot[1])
-        table.set('rot_z', rot[2])
+        lv = owner.getLinearVelocity(False)
+        table['lv_x'] = lv[0]
+        table['lv_y'] = lv[1]
+        table['lv_z'] = lv[2]
+
+        av = owner.getAngularVelocity(False)
+        table['av_x'] = av[0]
+        table['av_y'] = av[1]
+        table['av_z'] = av[2]
 
         return packer.to_bytes(table)
+
+    def deserialize(self, table):
+        pos = mathutils.Vector((table['pos_x'], table['pos_y'], table['pos_z']))
+        rot = mathutils.Quaternion((table['rot_x'], table['rot_y'],
+                                    table['rot_z'], table['rot_w']))
+        lv = mathutils.Vector((table['lv_x'], table['lv_y'], table['lv_z']))
+        av = mathutils.Vector((table['av_x'], table['av_y'], table['av_z']))
+
+        owner = self.owner
+        owner.worldPosition = pos
+        owner.worldOrientation = rot
+        owner.setLinearVelocity(lv, False)
+        owner.setAngularVelocity(av, False)
