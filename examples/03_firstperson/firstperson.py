@@ -90,7 +90,7 @@ class Player(component.GameObject):
         # For interpolation
         self.expected_position = self.owner.worldPosition.copy()
 
-    def start_server(self):
+    def start_server(self, args):
         # Force position sync twice per second, could do more
         self.pos_timer = 30
         self.pos_timer_reset = 30

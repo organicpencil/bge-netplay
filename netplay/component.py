@@ -7,7 +7,7 @@ from . import packer
 class GameObject:
     obj = None
 
-    def __init__(self, owner, ref=None):
+    def __init__(self, owner, ref=None, args=None):
         net = bge.logic.netplay
         # Weirdass workaround for network-enabled objects in the editor
         if owner is None:
@@ -31,7 +31,7 @@ class GameObject:
             # or spawning with scene.addObject
             self.permissions = []
             net.assign_component_id(self)
-            self.start_server()
+            self.start_server(args)
 
             buff = self.serialize()
             for c in net.clients:
@@ -101,7 +101,7 @@ class GameObject:
         """
         return
 
-    def start_server(self):
+    def start_server(self, args):
         return
 
     def start_client(self):

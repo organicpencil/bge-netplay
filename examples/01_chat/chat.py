@@ -28,7 +28,7 @@ class ChatWindow(component.GameObject):
     def start(self):
         None
 
-    def start_server(self):
+    def start_server(self, args):
         self.users = []
         self.messages = collections.deque()
 
