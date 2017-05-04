@@ -1,33 +1,35 @@
-# This is abandonware (14-March-2016)
-One of these days I'll replace it with something better (maybe)
-
 # bge-netplay
-A framework for building multiplayer games in Blender.
+A framework for multiplayer games in Blender.
 
-Documentation and examples are lacking.  The API is subject to change.  *I wouldn't use it yet.*
+**Features**
+- Reliable/unreliable UDP using enet
+- Reasonably efficient serialization using python-serializer
+- Several examples to get you up and running quickly (mileage may vary)
 
-What it does:
-- Abstracts ENet to manage connections
-- Things like input bitmasks and remote procedure calls
-- Builtin physics prefabs that kind of suck
-- (eventually) NAT punchthrough, relay hosting, LAN discovery
-
-What it doesn't do:
-- Automatic multiplayer.  You still need to know how multiplayer works.
-- Real games.  The framework is very much work-in-progress, expect bugs/slowness/security issues.
-- Work on MacOS or Win64 (yet)
+**Requirements**
+- UPBGE 0.0.8 or newer
+- pyenet built against Blender's Python version.  Prebuilt libs here: https://pqftgs.net/downloads/enet/
 
 
-#Running the examples
-**Blender 2.76 or newer is required**
+# Running the examples
 
 Clone the repository
-```
+```bash
 git clone https://github.com/pqftgs/bge-netplay.git
-cd bge-netplay
 ```
-Set up dependencies
+Copy the appropriate pyenet lib to the netplay folder.
+
+On Linux64:
+```bash
+cd bge-netplay/netplay
+wget https://pqftgs.net/downloads/enet/pyenet-1.3.13/enet.cpython-35m-x86_64-linux-gnu.so
 ```
-./download_deps.sh
-```
-Navigate to the examples folder and fire away!  It's recommended to run the server with the standalone player, as your system may hold onto the socket while blender remains open.
+
+Now open at least two instances of Blender - client and server - and run the examples!
+
+
+# 3rd party stuff
+- enet - https://github.com/lsalzman/enet
+- pyenet - https://github.com/aresch/pyenet
+- bitstring - https://github.com/scott-griffiths/bitstring
+- python-serializer - https://github.com/pqftgs/python-serializer
