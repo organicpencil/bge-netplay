@@ -1,4 +1,8 @@
 import bge
+import sys
+
+sys.path.append(bge.logic.expandPath('//../../'))
+
 from netplay import host
 
 

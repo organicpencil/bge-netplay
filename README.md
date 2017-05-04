@@ -1,5 +1,5 @@
 # bge-netplay
-A client-server framework for multiplayer games in Blender.  Only 64 bit Linux is supported at the moment.
+A framework for multiplayer games in Blender.
 
 **Features**
 - Reliable/unreliable UDP using enet
@@ -7,8 +7,8 @@ A client-server framework for multiplayer games in Blender.  Only 64 bit Linux i
 - Several examples to get you up and running quickly (mileage may vary)
 
 **Requirements**
-- Blender 2.77 or newer, UPBGE 0.0.7 or newer
-- pyenet built against Blender's Python version
+- UPBGE 0.0.8 or newer
+- pyenet built against Blender's Python version.  Prebuilt libs here: https://pqftgs.net/downloads/enet/
 
 
 # Running the examples
@@ -16,17 +16,16 @@ A client-server framework for multiplayer games in Blender.  Only 64 bit Linux i
 Clone the repository
 ```bash
 git clone https://github.com/pqftgs/bge-netplay.git
-cd bge-netplay
 ```
-Set up the example environment
+Copy the appropriate pyenet lib to the netplay folder.
+
+On Linux64:
 ```bash
-./setup_linux64.sh
+cd bge-netplay/netplay
+wget https://pqftgs.net/downloads/enet/pyenet-1.3.13/enet.cpython-35m-x86_64-linux-gnu.so
 ```
 
-Navigate to the examples folder and fire away!  It's recommended to close blender between server runs, or simply use the standalone player.
-
-
-**For other platforms you'll need to build pyenet from source**
+Now open at least two instances of Blender - client and server - and run the examples!
 
 
 # 3rd party stuff
@@ -34,4 +33,3 @@ Navigate to the examples folder and fire away!  It's recommended to close blende
 - pyenet - https://github.com/aresch/pyenet
 - bitstring - https://github.com/scott-griffiths/bitstring
 - python-serializer - https://github.com/pqftgs/python-serializer
-- compz - https://github.com/DCubix/Compz
