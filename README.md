@@ -7,7 +7,7 @@ A framework for multiplayer games in Blender.
 - Several examples to get you up and running quickly (mileage may vary)
 
 **Requirements**
-- UPBGE 0.0.8 or newer
+- Blender 2.77 or newer, UPBGE also supported
 - pyenet built against Blender's Python version.  Prebuilt libs here: https://pqftgs.net/downloads/enet/
 
 
