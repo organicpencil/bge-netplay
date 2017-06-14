@@ -202,9 +202,8 @@ class Player(component.GameObject):
         table.set('rot_z', rot[2])
 
         buff = packer.to_bytes(table)
-        #bge.logic.netplay.send_reliable(buff)
         # No point sending reliable if we're brute-forcing...
-        bge.logic.netplay.send_unreliable(buff)
+        bge.logic.netplay.send_to_server(buff, reliable=False)
 
     def mouseLook(self):
         if self.freeMouse:
@@ -357,12 +356,7 @@ class Player(component.GameObject):
 
         # Send
         buff = packer.to_bytes(table)
-        net = bge.logic.netplay
-        for c in net.clients:
-            if c is not None:
-                # Position sync is always sent to the owner
-                if pos or (c.peer.incomingPeerID not in self.permissions):
-                    c.send_reliable(buff)
+        bge.logic.netplay.send_to_clients(buff)
 
 
 def register_player(cont):

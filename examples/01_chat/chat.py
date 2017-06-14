@@ -46,10 +46,7 @@ class ChatWindow(component.GameObject):
         buff = packer.to_bytes(table)
 
         net = bge.logic.netplay
-        for c in net.clients:
-            if c is not None:
-                # Queues for sending
-                c.send_reliable(buff)
+        net.send_to_clients(buff)
 
     def MessageToClient(self, table):
         fullmsg = table.get('fullmessage')
@@ -63,7 +60,7 @@ class ChatWindow(component.GameObject):
         buff = packer.to_bytes(table)
         self.entry.text = ""
 
-        bge.logic.netplay.send_reliable(buff)
+        bge.logic.netplay.send_to_server(buff)
 
     def serialize(self):
         data = list(self.messages)

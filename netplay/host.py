@@ -163,9 +163,9 @@ class ServerHost:
                     else:
                         logging.warning('Client does not have input permission')
 
-        self.send_queued_data()
+        self._send_queued_data()
 
-    def send_queued_data(self):
+    def _send_queued_data(self):
         if self.network is None:
             return
 
@@ -186,6 +186,26 @@ class ServerHost:
                     channel += 1
 
                 c.reliable = [[]] * c.channels
+
+    def send_to_clients(self, buff, reliable=True, channel=0, clients=None):
+        if clients is None:
+            if reliable:
+                for c in self.clients:
+                    if c is not None:
+                        c.send_reliable(buff, channel)
+            else:
+                for c in self.clients:
+                    if c is not None:
+                        c.send(buff)
+
+        else:
+            for peer_id in clients:
+                c = self.clients[peer_id]
+                if c is not None:
+                    if reliable:
+                        c.send_reliable(buff, channel)
+                    else:
+                        c.send(buff)
 
 
 class _Client:
@@ -228,11 +248,11 @@ class ClientHost:
         # Works the same, may as well re-use this code
         self._wrapper = _Client(self.serverPeer)
 
-    def send_unreliable(self, buff):
-        self._wrapper.send_unreliable(buff)
-
-    def send_reliable(self, buff, channel=0):
-        self._wrapper.send_reliable(buff, channel)
+    def send_to_server(self, buff, reliable=True, channel=0, clients=None):
+        if reliable:
+            self._wrapper.send_reliable(buff, channel)
+        else:
+            self._wrapper.send_unreliable(buff)
 
     def on_connect(self):
         print ("Connected")
@@ -315,9 +335,9 @@ class ClientHost:
                         # Run the associated method
                         getattr(component, table.tableName())(table)
 
-        self.send_queued_data()
+        self._send_queued_data()
 
-    def send_queued_data(self):
+    def _send_queued_data(self):
         c = self._wrapper
         if len(c.unreliable):
             joined_buffers = packer.join_buffers(c.unreliable)

@@ -72,11 +72,7 @@ class Cube(component.GameObject):
         buff = self.serialize()
         net = bge.logic.netplay
 
-        # This seriously needs an abstraction
-        for c in net.clients:
-            if c is not None:
-                # Queues for sending
-                c.send_reliable(buff)
+        net.send_to_clients(buff)
 
 
 def register_cube(cont):
